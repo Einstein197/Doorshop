@@ -52,6 +52,18 @@
             font-weight: normal;
             color: green;
         }
+        #foamMark {
+            color: black;
+        }
+
+        #foamMark b {
+            font-weight: bold;
+        }
+
+        #foamMark span {
+            font-weight: normal;
+            color: green;
+        }
 
         #Truput {
             color: blue;
@@ -162,6 +174,7 @@
 
             <p id="dividebyseconds">Total Seconds: <span id="totalSecondsNumber"></span></p>
             <p id="additionalInfo"><span id="additionalSecondsNumber"></span></p>
+            <p id="foamMark"><b>Foam Mark:</b> <span id="FoamMarkValue"></span></p>
         </div>
     </section>
 
@@ -180,7 +193,36 @@
                 return parseFloat(input) || 0;
             }
         }
+        function formatFraction(value) {
+            const tolerance = 1e-6;
+            const whole = Math.floor(value);
+            const decimal = value - whole;
 
+            // Find denominator up to 16
+            let bestNumerator = 0;
+            let bestDenominator = 1;
+            let minError = 1;
+
+            for (let denominator = 1; denominator <= 16; denominator++) {
+                let numerator = Math.round(decimal * denominator);
+                let error = Math.abs(decimal - (numerator / denominator));
+                if (error < minError - tolerance) {
+                    bestNumerator = numerator;
+                    bestDenominator = denominator;
+                    minError = error;
+                }
+            }
+
+            if (bestNumerator === 0) {
+                return whole.toString();
+            }
+
+            if (whole === 0) {
+                return `${bestNumerator}/${bestDenominator}`;
+            }
+
+            return `${whole} ${bestNumerator}/${bestDenominator}`;
+        }
         function updateCalculation() {
             var lengthInput = document.getElementById("lengthInput").value.trim();
             var widthInput = document.getElementById("widthInput").value.trim();
@@ -213,6 +255,8 @@
 
             var adjustedSeconds = totalSeconds / (parseFloat(dividebysecondsinput) || 0);
             document.getElementById("additionalInfo").innerHTML = "Divided Seconds:  <span id='additionalSecondsNumber'>" + adjustedSeconds.toFixed(2) + "</span>";
+            var foamMark = (length / 2) - 4;
+            document.getElementById("FoamMarkValue").innerText = formatFraction(foamMark);
         }
 
         function handleFocus(event) {

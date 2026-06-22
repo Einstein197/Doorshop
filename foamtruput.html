@@ -594,12 +594,12 @@
 
     <script>
         // ============================================================
-        //  FOAM TRUPUT DATA (US Date Format: MM/DD/YYYY)
+        //  FOAM TRUPUT DATA
         // ============================================================
         const defaultData = [];
 
         // ============================================================
-        //  LOCAL STORAGE HELPERS
+        //  LOCAL STORAGE
         // ============================================================
         const STORAGE_KEY = 'foamTruputData';
 
@@ -608,12 +608,10 @@
             if (stored) {
                 try {
                     const parsed = JSON.parse(stored);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
+                    if (Array.isArray(parsed)) {
                         return parsed;
                     }
-                } catch (e) {
-                    console.warn('Failed to parse stored data, using default.');
-                }
+                } catch (e) {}
             }
             return defaultData.map(row => [...row]);
         }
@@ -628,14 +626,11 @@
         }
 
         // ============================================================
-        //  DATE HELPERS (MM/DD/YYYY)
+        //  DATE HELPERS
         // ============================================================
         function getTodayUS() {
             const today = new Date();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-            const year = today.getFullYear();
-            return `${month}/${day}/${year}`;
+            return `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
         }
 
         function isValidDateUS(dateStr) {
@@ -656,10 +651,7 @@
         // ============================================================
         let currentData = loadData();
         let sortConfig = { col: null, asc: true };
-        let pendingDeleteIndex = -1;
-
-        // Unique ID counter for rows (for tracking)
-        let rowIdCounter = currentData.length;
+        let pendingDeleteId = null;
 
         const tbody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
@@ -674,7 +666,7 @@
         const cancelAddBtn = document.getElementById('cancelAddBtn');
         const addBtn = document.getElementById('addBtn');
 
-        // Modal elements
+        // Modal
         const deleteModal = document.getElementById('deleteModal');
         const modalCancelBtn = document.getElementById('modalCancelBtn');
         const modalConfirmBtn = document.getElementById('modalConfirmBtn');
@@ -692,39 +684,35 @@
         const newDate = document.getElementById('newDate');
         const newWeight = document.getElementById('newWeight');
 
-        // Set initial date
         newDate.value = getTodayUS();
 
         // ============================================================
-        //  AUTO-CALCULATE EFFICIENCY
+        //  AUTO-CALC EFFICIENCY
         // ============================================================
         function calcEfficiency() {
             const red = parseFloat(newRed.value) || 0;
             const blue = parseFloat(newBlue.value) || 0;
             if (red > 0 && blue >= 0) {
-                const eff = (blue / red) * 100;
-                newEff.value = eff.toFixed(1);
+                newEff.value = ((blue / red) * 100).toFixed(1);
             } else {
                 newEff.value = '';
             }
         }
-
         newRed.addEventListener('input', calcEfficiency);
         newBlue.addEventListener('input', calcEfficiency);
 
         // ============================================================
-        //  GET FILTERED & SORTED DATA
+        //  GET FILTERED DATA
         // ============================================================
         function getFilteredData() {
             const term = searchInput.value.trim().toLowerCase();
             let filtered = currentData.filter(row =>
                 row.some(cell => String(cell).toLowerCase().includes(term))
             );
-
             if (sortConfig.col !== null) {
                 const col = sortConfig.col;
                 const asc = sortConfig.asc;
-                filtered = [...filtered].sort((a, b) => {
+                filtered.sort((a, b) => {
                     const va = a[col] ?? '';
                     const vb = b[col] ?? '';
                     const na = parseFloat(va);
@@ -739,24 +727,22 @@
         }
 
         // ============================================================
-        //  FIND ROW INDEX IN currentData BY VALUES
+        //  GENERATE UNIQUE ID
         // ============================================================
-        function findDataIndex(rowValues) {
-            for (let i = 0; i < currentData.length; i++) {
-                const row = currentData[i];
-                if (row.length === rowValues.length &&
-                    row.every((val, j) => String(val) === String(rowValues[j]))) {
-                    return i;
-                }
+        let nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
+
+        function getRowId(row) {
+            if (!row._id) {
+                row._id = nextId++;
             }
-            return -1;
+            return row._id;
         }
 
         // ============================================================
         //  SHOW DELETE MODAL
         // ============================================================
-        function showDeleteModal(rowData, index) {
-            pendingDeleteIndex = index;
+        function showDeleteModal(rowData, id) {
+            pendingDeleteId = id;
             modalType.textContent = rowData[0] || '--';
             modalRed.textContent = rowData[1] || '--';
             modalBlue.textContent = rowData[2] || '--';
@@ -768,32 +754,29 @@
 
         function hideDeleteModal() {
             deleteModal.classList.remove('active');
-            pendingDeleteIndex = -1;
+            pendingDeleteId = null;
         }
 
         function confirmDelete() {
-            if (pendingDeleteIndex !== -1 && pendingDeleteIndex < currentData.length) {
-                currentData.splice(pendingDeleteIndex, 1);
-                saveData(currentData);
-                render();
+            if (pendingDeleteId !== null) {
+                // Find the row with this ID
+                const index = currentData.findIndex(row => row._id === pendingDeleteId);
+                if (index !== -1) {
+                    currentData.splice(index, 1);
+                    saveData(currentData);
+                    render();
+                }
             }
             hideDeleteModal();
         }
 
-        // Modal event listeners
         modalCancelBtn.addEventListener('click', hideDeleteModal);
         modalConfirmBtn.addEventListener('click', confirmDelete);
-
         deleteModal.addEventListener('click', (e) => {
-            if (e.target === deleteModal) {
-                hideDeleteModal();
-            }
+            if (e.target === deleteModal) hideDeleteModal();
         });
-
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && deleteModal.classList.contains('active')) {
-                hideDeleteModal();
-            }
+            if (e.key === 'Escape' && deleteModal.classList.contains('active')) hideDeleteModal();
         });
 
         // ============================================================
@@ -806,12 +789,11 @@
                 tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((row) => {
-                    // Find the actual index in currentData
-                    const dataIndex = findDataIndex(row);
-                    return `<tr data-row-id="${dataIndex}">
-                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                    const id = getRowId(row);
+                    return `<tr data-id="${id}">
+                        ${row.slice(0, 6).map(cell => `<td>${cell}</td>`).join('')}
                         <td>
-                            <button class="delete-btn" data-index="${dataIndex}" title="Delete record">
+                            <button class="delete-btn" data-id="${id}" title="Delete record">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -843,18 +825,19 @@
             });
 
             // ============================================================
-            //  DELETE BUTTON HANDLERS
+            //  DELETE BUTTON HANDLERS - SIMPLIFIED!
             // ============================================================
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    const index = parseInt(this.dataset.index);
-                    
-                    if (!isNaN(index) && index >= 0 && index < currentData.length) {
-                        const rowData = currentData[index];
-                        showDeleteModal(rowData, index);
-                    } else {
-                        alert('Could not find this record to delete. Try refreshing the page.');
+                    const id = parseInt(this.dataset.id);
+                    if (!isNaN(id)) {
+                        const row = currentData.find(r => r._id === id);
+                        if (row) {
+                            showDeleteModal(row, id);
+                        } else {
+                            alert('Record not found.');
+                        }
                     }
                 });
             });
@@ -888,6 +871,7 @@
             const finalEff = newEff.value || '';
 
             const newRow = [type, red, blue, finalEff ? finalEff + '%' : '', date, weight];
+            newRow._id = nextId++;
             currentData.push(newRow);
             saveData(currentData);
             render();
@@ -926,11 +910,12 @@
         searchInput.addEventListener('input', render);
 
         // ============================================================
-        //  RESET to Default
+        //  RESET
         // ============================================================
         resetBtn.addEventListener('click', () => {
             if (confirm('Reset to default data? All changes will be lost.')) {
                 currentData = defaultData.map(row => [...row]);
+                nextId = currentData.length + 1;
                 saveData(currentData);
                 searchInput.value = '';
                 sortConfig = { col: null, asc: true };
@@ -976,7 +961,7 @@
         // ============================================================
         exportBtn.addEventListener('click', () => {
             const headersRow = ['Type', 'Red', 'Blue', 'Efficiency', 'Date', 'Weight'];
-            const rows = [headersRow, ...currentData];
+            const rows = [headersRow, ...currentData.map(row => row.slice(0, 6))];
             const csv = rows.map(row => row.join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
@@ -988,10 +973,11 @@
         });
 
         // ============================================================
-        //  EXPORT JSON (Backup)
+        //  EXPORT JSON
         // ============================================================
         exportJsonBtn.addEventListener('click', () => {
-            const json = JSON.stringify(currentData, null, 2);
+            const dataToExport = currentData.map(row => row.slice(0, 6));
+            const json = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1002,7 +988,7 @@
         });
 
         // ============================================================
-        //  IMPORT JSON (Restore)
+        //  IMPORT JSON
         // ============================================================
         importJsonBtn.addEventListener('click', () => {
             fileInput.click();
@@ -1018,6 +1004,9 @@
                     if (Array.isArray(data) && data.length > 0) {
                         if (confirm(`Load ${data.length} records from backup?`)) {
                             currentData = data.map(row => [...row]);
+                            // Assign new IDs
+                            nextId = currentData.length + 1;
+                            currentData.forEach((row, i) => row._id = i + 1);
                             saveData(currentData);
                             searchInput.value = '';
                             sortConfig = { col: null, asc: true };
@@ -1035,7 +1024,7 @@
         });
 
         // ============================================================
-        //  EDIT CELL (double-click) - FIXED
+        //  EDIT CELL (double-click)
         // ============================================================
         tbody.addEventListener('dblclick', (e) => {
             const td = e.target.closest('td');
@@ -1043,18 +1032,17 @@
             const tr = td.closest('tr');
             if (!tr) return;
             const colIndex = td.cellIndex;
-            if (colIndex === 6) return; // Skip action column
+            if (colIndex === 6) return;
 
-            // Get the data-index from the row
-            const rowId = tr.dataset.rowId;
-            if (rowId === undefined) {
-                alert('Could not find this record to edit.');
+            const id = parseInt(tr.dataset.id);
+            if (isNaN(id)) {
+                alert('Could not find this record.');
                 return;
             }
 
-            const dataIndex = parseInt(rowId);
-            if (isNaN(dataIndex) || dataIndex < 0 || dataIndex >= currentData.length) {
-                alert('Could not find this record to edit.');
+            const dataIndex = currentData.findIndex(row => row._id === id);
+            if (dataIndex === -1) {
+                alert('Could not find this record.');
                 return;
             }
 
@@ -1080,10 +1068,6 @@
                     input.focus();
                     return;
                 }
-                // If editing Efficiency (colIndex 3), auto-add % if missing
-                if (colIndex === 3 && newValue && !newValue.includes('%')) {
-                    newValue = newValue + '%';
-                }
                 currentData[dataIndex][colIndex] = newValue || oldValue;
                 saveData(currentData);
                 render();
@@ -1100,6 +1084,11 @@
         // ============================================================
         //  INITIAL RENDER
         // ============================================================
+        // Ensure existing rows have IDs
+        currentData.forEach((row, i) => {
+            if (!row._id) row._id = i + 1;
+        });
+        nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
         render();
     </script>
 </body>

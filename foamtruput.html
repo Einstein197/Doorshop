@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Foam Truput · Production Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #eef3f8;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 28px;
+            padding: 2rem 2rem 2.2rem;
+            box-shadow: 0 20px 50px rgba(0, 20, 30, 0.10);
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #0a1e33;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 i {
+            color: #1a6df5;
+        }
+        .subhead {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 0.3rem 0 1.5rem 0;
+            color: #2a405c;
+            border-bottom: 1px solid #e4ebf3;
+            padding-bottom: 0.8rem;
+        }
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+        }
+        .stats-bar span {
+            background: #f4f9ff;
+            padding: 0.25rem 1.2rem;
+            border-radius: 40px;
+        }
+        .stats-bar i {
+            margin-right: 6px;
+            color: #1a6df5;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1 1 200px;
+            display: flex;
+            align-items: center;
+            background: #f1f5fa;
+            border-radius: 60px;
+            padding: 0 1.2rem;
+            border: 1px solid #dce3ed;
+            transition: 0.2s;
+        }
+        .search-box:focus-within {
+            border-color: #1a6df5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26, 109, 245, 0.10);
+        }
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 0.65rem 0.5rem;
+            width: 100%;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        .search-box i {
+            color: #6c85a3;
+        }
+        .btn {
+            background: white;
+            border: 1px solid #d0dae8;
+            padding: 0.5rem 1.2rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+            color: #1b3147;
+        }
+        .btn:hover {
+            background: #eef4fc;
+            border-color: #b0c2db;
+        }
+        .btn-primary {
+            background: #1a4cff;
+            border-color: #1a4cff;
+            color: white;
+        }
+        .btn-primary i {
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0d3ee0;
+        }
+        .btn-success {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        .btn-success i {
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+            border-color: #1e7e34;
+        }
+        .btn-danger {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-danger i {
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+            border-color: #c82333;
+        }
+        .btn-warning {
+            background: #ffc107;
+            border-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning i {
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+            border-color: #e0a800;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d0dae8;
+            color: #1b3147;
+        }
+        .btn-outline:hover {
+            background: #eef4fc;
+        }
+        .add-form {
+            background: #f8fbff;
+            border: 1px solid #e6ecf5;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.2rem;
+            display: none;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.8rem 1.2rem;
+        }
+        .add-form.open {
+            display: flex;
+        }
+        .add-form .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .add-form .field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4a627f;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .add-form .field input,
+        .add-form .field select {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #d0dae8;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            min-width: 120px;
+        }
+        .add-form .field input:focus,
+        .add-form .field select:focus {
+            outline: 2px solid #1a6df5;
+            border-color: transparent;
+        }
+        .add-form .field input[type="number"] {
+            width: 100px;
+        }
+        .add-form .actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-bottom: 2px;
+        }
+        .today-badge {
+            font-size: 0.7rem;
+            color: #28a745;
+            background: #d4edda;
+            padding: 0.1rem 0.6rem;
+            border-radius: 40px;
+            margin-left: 6px;
+        }
+        .calc-hint {
+            font-size: 0.65rem;
+            color: #6c85a3;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .eff-auto {
+            color: #28a745;
+            font-size: 0.7rem;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid #e6ecf5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            min-width: 500px;
+        }
+        th {
+            background: #f8fbff;
+            color: #1a314b;
+            font-weight: 600;
+            padding: 0.8rem 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #dce4ef;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        th i {
+            margin-left: 6px;
+            opacity: 0.35;
+            font-size: 0.7rem;
+        }
+        th:hover {
+            background: #edf4fe;
+        }
+        td {
+            padding: 0.7rem 0.8rem;
+            border-bottom: 1px solid #edf2f9;
+            color: #14273e;
+        }
+        tr:hover td {
+            background: #f8fcff;
+        }
+        .empty {
+            text-align: center;
+            padding: 2.5rem;
+            color: #6a85a3;
+        }
+        .footer {
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #5b7493;
+            font-size: 0.85rem;
+        }
+        .footer .left i,
+        .footer .right i {
+            margin-right: 5px;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.1rem 0.7rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-info {
+            background: #cce5ff;
+            color: #004085;
+            padding: 0.1rem 0.7rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: 0.15s;
+            opacity: 0.6;
+        }
+        .delete-btn:hover {
+            opacity: 1;
+            background: #f8d7da;
+            transform: scale(1.05);
+        }
+        .storage-status {
+            font-size: 0.75rem;
+            color: #28a745;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .storage-status i {
+            font-size: 0.8rem;
+        }
+        @media (max-width: 700px) {
+            .container {
+                padding: 1.2rem;
+            }
+            h1 {
+                font-size: 1.4rem;
+            }
+            .stats-bar {
+                gap: 0.6rem;
+                font-size: 0.8rem;
+            }
+            .stats-bar span {
+                padding: 0.15rem 0.8rem;
+            }
+            .add-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .add-form .field input[type="number"] {
+                width: 100%;
+            }
+            .add-form .actions {
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; align-items:center;">
+            <h1><i class="fas fa-cube"></i> Foam Truput</h1>
+            <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+                <span class="badge-info" id="storageStatus"><i class="fas fa-database"></i> <span id="storageCount">0</span> saved</span>
+                <span class="badge-success"><i class="fas fa-file-excel"></i> live</span>
+            </div>
+        </div>
+        <div class="subhead">
+            <div class="stats-bar">
+                <span><i class="fas fa-weight-scale"></i> Total Red: <strong id="totalRed">--</strong></span>
+                <span><i class="fas fa-weight-scale"></i> Total Blue: <strong id="totalBlue">--</strong></span>
+                <span><i class="fas fa-percent"></i> Avg Efficiency: <strong id="avgEff">--</strong></span>
+                <span><i class="fas fa-list"></i> <span id="rowCount">--</span> records</span>
+            </div>
+            <div><i class="fas fa-arrow-up-wide-short"></i> click header to sort</div>
+        </div>
+
+        <!-- ADD RECORD FORM -->
+        <div class="add-form" id="addForm">
+            <div class="field">
+                <label>Type</label>
+                <select id="newType">
+                    <option value="Doors">Doors</option>
+                    <option value="Door">Door</option>
+                    <option value="Rail">Rail</option>
+                    <option value="Frame">Frame</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Red <span class="eff-auto"><i class="fas fa-calculator"></i></span></label>
+                <input type="number" id="newRed" value="0" step="1" />
+            </div>
+            <div class="field">
+                <label>Blue <span class="eff-auto"><i class="fas fa-calculator"></i></span></label>
+                <input type="number" id="newBlue" value="0" step="1" />
+            </div>
+            <div class="field">
+                <label>Efficiency (%) <span class="eff-auto">auto-calc</span></label>
+                <input type="number" id="newEff" value="0" step="0.1" readonly style="background:#f1f5fa; cursor:not-allowed;" />
+                <span class="calc-hint">(Blue ÷ Red × 100)</span>
+            </div>
+            <div class="field">
+                <label>Date <span class="today-badge"><i class="far fa-calendar-alt"></i> auto-today</span></label>
+                <input type="text" id="newDate" placeholder="MM/DD/YYYY" />
+            </div>
+            <div class="field">
+                <label>Weight</label>
+                <input type="number" id="newWeight" value="0" step="1" />
+            </div>
+            <div class="actions">
+                <button class="btn btn-success" id="addBtn"><i class="fas fa-plus"></i> Add</button>
+                <button class="btn" id="cancelAddBtn"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Filter..." />
+            </div>
+            <div>
+                <button class="btn" id="toggleFormBtn"><i class="fas fa-plus-circle"></i> Add Record</button>
+                <button class="btn" id="resetBtn"><i class="fas fa-undo"></i> Reset</button>
+                <button class="btn btn-primary" id="exportBtn"><i class="fas fa-download"></i> CSV</button>
+                <button class="btn btn-warning" id="exportJsonBtn"><i class="fas fa-save"></i> Backup</button>
+                <button class="btn btn-outline" id="importJsonBtn"><i class="fas fa-upload"></i> Restore</button>
+                <input type="file" id="fileInput" accept=".json" style="display:none;" />
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th data-col="0">Type <i class="fas fa-sort"></i></th>
+                        <th data-col="1">Red <i class="fas fa-sort"></i></th>
+                        <th data-col="2">Blue <i class="fas fa-sort"></i></th>
+                        <th data-col="3">Efficiency <i class="fas fa-sort"></i></th>
+                        <th data-col="4">Date <i class="fas fa-sort"></i></th>
+                        <th data-col="5">Weight <i class="fas fa-sort"></i></th>
+                        <th style="cursor:default; min-width:60px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="footer">
+            <span class="left"><i class="fas fa-pen"></i> double-click cell to edit</span>
+            <span class="right"><i class="fas fa-trash"></i> click trash icon to delete</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  FOAM TRUPUT DATA (US Date Format: MM/DD/YYYY)
+        // ============================================================
+        const defaultData = [
+            ["Doors", 1246, 921, "73.9%", "10/23/2025", ""],
+            ["Rail", 793, 73, "9.2%", "11/27/2025", "1496"],
+            ["Doors", 1225, 901, "73.6%", "1/1/2026", "2022"],
+            ["Doors", 1243, 904, "72.7%", "2/5/2026", "2015"],
+            ["Door", 1215, 895, "73.7%", "6/22/2026", "1930"]
+        ];
+
+        // ============================================================
+        //  LOCAL STORAGE HELPERS
+        // ============================================================
+        const STORAGE_KEY = 'foamTruputData';
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return parsed;
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse stored data, using default.');
+                }
+            }
+            return defaultData.map(row => [...row]);
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            updateStorageStatus(data.length);
+        }
+
+        function updateStorageStatus(count) {
+            document.getElementById('storageCount').textContent = count;
+        }
+
+        // ============================================================
+        //  DATE HELPERS (MM/DD/YYYY)
+        // ============================================================
+        function getTodayUS() {
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            const year = today.getFullYear();
+            return `${month}/${day}/${year}`;
+        }
+
+        function isValidDateUS(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return false;
+            const month = parseInt(parts[0]);
+            const day = parseInt(parts[1]);
+            const year = parseInt(parts[2]);
+            if (isNaN(month) || isNaN(day) || isNaN(year)) return false;
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+            if (year < 1900 || year > 2100) return false;
+            return true;
+        }
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let currentData = loadData();
+        let sortConfig = { col: null, asc: true };
+
+        const tbody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
+        const importJsonBtn = document.getElementById('importJsonBtn');
+        const fileInput = document.getElementById('fileInput');
+        const headers = document.querySelectorAll('#dataTable thead th');
+        const toggleFormBtn = document.getElementById('toggleFormBtn');
+        const addForm = document.getElementById('addForm');
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+        const addBtn = document.getElementById('addBtn');
+
+        const newType = document.getElementById('newType');
+        const newRed = document.getElementById('newRed');
+        const newBlue = document.getElementById('newBlue');
+        const newEff = document.getElementById('newEff');
+        const newDate = document.getElementById('newDate');
+        const newWeight = document.getElementById('newWeight');
+
+        // Set initial date
+        newDate.value = getTodayUS();
+
+        // ============================================================
+        //  AUTO-CALCULATE EFFICIENCY
+        // ============================================================
+        function calcEfficiency() {
+            const red = parseFloat(newRed.value) || 0;
+            const blue = parseFloat(newBlue.value) || 0;
+            if (red > 0 && blue >= 0) {
+                const eff = (blue / red) * 100;
+                newEff.value = eff.toFixed(1);
+            } else {
+                newEff.value = '';
+            }
+        }
+
+        newRed.addEventListener('input', calcEfficiency);
+        newBlue.addEventListener('input', calcEfficiency);
+
+        // ============================================================
+        //  GET FILTERED & SORTED DATA
+        // ============================================================
+        function getFilteredData() {
+            const term = searchInput.value.trim().toLowerCase();
+            let filtered = currentData.filter(row =>
+                row.some(cell => String(cell).toLowerCase().includes(term))
+            );
+
+            if (sortConfig.col !== null) {
+                const col = sortConfig.col;
+                const asc = sortConfig.asc;
+                filtered = [...filtered].sort((a, b) => {
+                    const va = a[col] ?? '';
+                    const vb = b[col] ?? '';
+                    const na = parseFloat(va);
+                    const nb = parseFloat(vb);
+                    if (!isNaN(na) && !isNaN(nb)) {
+                        return asc ? na - nb : nb - na;
+                    }
+                    return asc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+                });
+            }
+            return filtered;
+        }
+
+        // ============================================================
+        //  FIND ROW INDEX IN currentData BY VALUES
+        // ============================================================
+        function findDataIndex(rowValues) {
+            return currentData.findIndex(row =>
+                row.length === rowValues.length &&
+                row.every((val, i) => val === rowValues[i])
+            );
+        }
+
+        // ============================================================
+        //  RENDER
+        // ============================================================
+        function render() {
+            const filtered = getFilteredData();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map((row) => {
+                    // Find the actual index in currentData
+                    const dataIndex = findDataIndex(row);
+                    // Create a unique ID for this row using the dataIndex
+                    const rowId = dataIndex !== -1 ? dataIndex : Math.random().toString(36).substr(2, 9);
+                    return `<tr data-row-id="${rowId}">
+                        ${row.map(cell => `<td>${cell}</td>`).join('')}
+                        <td>
+                            <button class="delete-btn" data-row-id="${rowId}" title="Delete record">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Update stats
+            const totalRed = filtered.reduce((sum, row) => sum + (parseFloat(row[1]) || 0), 0);
+            const totalBlue = filtered.reduce((sum, row) => sum + (parseFloat(row[2]) || 0), 0);
+            const effValues = filtered.map(row => parseFloat(row[3]) || 0).filter(v => v > 0);
+            const avgEff = effValues.length ? (effValues.reduce((a, b) => a + b, 0) / effValues.length) : 0;
+
+            document.getElementById('totalRed').textContent = totalRed.toLocaleString();
+            document.getElementById('totalBlue').textContent = totalBlue.toLocaleString();
+            document.getElementById('avgEff').textContent = avgEff.toFixed(1) + '%';
+            document.getElementById('rowCount').textContent = filtered.length;
+            updateStorageStatus(currentData.length);
+
+            headers.forEach((th, idx) => {
+                const icon = th.querySelector('i');
+                if (idx === sortConfig.col) {
+                    icon.className = `fas fa-sort-${sortConfig.asc ? 'up' : 'down'}`;
+                    icon.style.opacity = '1';
+                } else {
+                    icon.className = 'fas fa-sort';
+                    icon.style.opacity = '0.35';
+                }
+            });
+
+            // ============================================================
+            //  DELETE BUTTON HANDLERS (FIXED)
+            // ============================================================
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const rowId = this.dataset.rowId;
+                    
+                    // Find the row element
+                    const tr = this.closest('tr');
+                    if (!tr) return;
+                    
+                    // Get the row data from the displayed cells
+                    const cells = tr.querySelectorAll('td');
+                    if (cells.length < 7) return; // Need all columns + action
+                    
+                    // Build the row data from displayed cells (skip the last cell which is the action button)
+                    const rowData = [];
+                    for (let i = 0; i < cells.length - 1; i++) {
+                        rowData.push(cells[i].textContent.trim());
+                    }
+                    
+                    // Find this row in currentData
+                    const dataIndex = findDataIndex(rowData);
+                    
+                    if (dataIndex === -1) {
+                        alert('Could not find this record to delete. Please refresh and try again.');
+                        return;
+                    }
+                    
+                    // Confirm deletion
+                    if (!confirm(`Delete this record?\n\n${rowData.join(' | ')}`)) {
+                        return;
+                    }
+                    
+                    // Remove from data
+                    currentData.splice(dataIndex, 1);
+                    saveData(currentData);
+                    render();
+                });
+            });
+        }
+
+        // ============================================================
+        //  ADD RECORD
+        // ============================================================
+        function addRecord() {
+            const type = newType.value;
+            const red = parseInt(newRed.value) || 0;
+            const blue = parseInt(newBlue.value) || 0;
+            let date = newDate.value.trim();
+            const weight = newWeight.value || '';
+
+            if (!type) {
+                alert('Please select a Type.');
+                return;
+            }
+
+            // Validate date format
+            if (date && !isValidDateUS(date)) {
+                alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
+                return;
+            }
+
+            // If date is empty, use today
+            if (!date) {
+                date = getTodayUS();
+            }
+
+            calcEfficiency();
+            const finalEff = newEff.value || '';
+
+            const newRow = [type, red, blue, finalEff ? finalEff + '%' : '', date, weight];
+            currentData.push(newRow);
+            saveData(currentData);
+            render();
+
+            newType.value = 'Doors';
+            newRed.value = '0';
+            newBlue.value = '0';
+            newEff.value = '';
+            newDate.value = getTodayUS();
+            newWeight.value = '0';
+
+            addForm.classList.remove('open');
+            toggleFormBtn.textContent = 'Add Record';
+            toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
+        }
+
+        // ============================================================
+        //  SORT
+        // ============================================================
+        headers.forEach((th, idx) => {
+            if (idx === 6) return;
+            th.addEventListener('click', () => {
+                if (sortConfig.col === idx) {
+                    sortConfig.asc = !sortConfig.asc;
+                } else {
+                    sortConfig.col = idx;
+                    sortConfig.asc = true;
+                }
+                render();
+            });
+        });
+
+        // ============================================================
+        //  SEARCH
+        // ============================================================
+        searchInput.addEventListener('input', render);
+
+        // ============================================================
+        //  RESET to Default
+        // ============================================================
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Reset to default data? All changes will be lost.')) {
+                currentData = defaultData.map(row => [...row]);
+                saveData(currentData);
+                searchInput.value = '';
+                sortConfig = { col: null, asc: true };
+                render();
+            }
+        });
+
+        // ============================================================
+        //  TOGGLE FORM
+        // ============================================================
+        toggleFormBtn.addEventListener('click', () => {
+            addForm.classList.toggle('open');
+            if (addForm.classList.contains('open')) {
+                toggleFormBtn.textContent = 'Close Form';
+                toggleFormBtn.innerHTML = '<i class="fas fa-times-circle"></i> Close Form';
+                newDate.value = getTodayUS();
+                calcEfficiency();
+            } else {
+                toggleFormBtn.textContent = 'Add Record';
+                toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
+            }
+        });
+
+        cancelAddBtn.addEventListener('click', () => {
+            addForm.classList.remove('open');
+            toggleFormBtn.textContent = 'Add Record';
+            toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
+        });
+
+        addBtn.addEventListener('click', addRecord);
+
+        document.querySelectorAll('#addForm input, #addForm select').forEach(field => {
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addRecord();
+                }
+            });
+        });
+
+        // ============================================================
+        //  EXPORT CSV
+        // ============================================================
+        exportBtn.addEventListener('click', () => {
+            const headersRow = ['Type', 'Red', 'Blue', 'Efficiency', 'Date', 'Weight'];
+            const rows = [headersRow, ...currentData];
+            const csv = rows.map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'foam_truput_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // ============================================================
+        //  EXPORT JSON (Backup)
+        // ============================================================
+        exportJsonBtn.addEventListener('click', () => {
+            const json = JSON.stringify(currentData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `foam_truput_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // ============================================================
+        //  IMPORT JSON (Restore)
+        // ============================================================
+        importJsonBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (Array.isArray(data) && data.length > 0) {
+                        if (confirm(`Load ${data.length} records from backup?`)) {
+                            currentData = data.map(row => [...row]);
+                            saveData(currentData);
+                            searchInput.value = '';
+                            sortConfig = { col: null, asc: true };
+                            render();
+                        }
+                    } else {
+                        alert('Invalid backup file.');
+                    }
+                } catch (e) {
+                    alert('Error reading file. Make sure it\'s a valid JSON backup.');
+                }
+            };
+            reader.readAsText(file);
+            fileInput.value = '';
+        });
+
+        // ============================================================
+        //  EDIT CELL (double-click)
+        // ============================================================
+        tbody.addEventListener('dblclick', (e) => {
+            const td = e.target.closest('td');
+            if (!td) return;
+            const tr = td.closest('tr');
+            if (!tr) return;
+            const colIndex = td.cellIndex;
+            if (colIndex === 6) return; // Skip action column
+
+            // Get the row data from displayed cells
+            const cells = tr.querySelectorAll('td');
+            const rowData = [];
+            for (let i = 0; i < cells.length - 1; i++) {
+                rowData.push(cells[i].textContent.trim());
+            }
+            
+            const dataIndex = findDataIndex(rowData);
+            if (dataIndex === -1) {
+                alert('Could not find this record to edit.');
+                return;
+            }
+
+            const oldValue = currentData[dataIndex][colIndex];
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldValue;
+            input.style.width = '100%';
+            input.style.border = '2px solid #1a6df5';
+            input.style.borderRadius = '6px';
+            input.style.padding = '4px 6px';
+            input.style.fontSize = '0.9rem';
+            td.innerHTML = '';
+            td.appendChild(input);
+            input.focus();
+            input.select();
+
+            const save = () => {
+                let newValue = input.value.trim();
+                // If editing the date column (index 4), validate format
+                if (colIndex === 4 && newValue && !isValidDateUS(newValue)) {
+                    alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
+                    input.value = oldValue;
+                    input.focus();
+                    return;
+                }
+                currentData[dataIndex][colIndex] = newValue || oldValue;
+                saveData(currentData);
+                render();
+            };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') { ev.preventDefault();
+                    input.blur(); }
+                if (ev.key === 'Escape') { input.value = oldValue;
+                    input.blur(); }
+            });
+        });
+
+        // ============================================================
+        //  INITIAL RENDER
+        // ============================================================
+        render();
+    </script>
+</body>
+</html>

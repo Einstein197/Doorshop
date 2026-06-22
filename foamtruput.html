@@ -334,6 +334,116 @@
         .storage-status i {
             font-size: 0.8rem;
         }
+
+        /* ============================================================
+           CUSTOM DELETE MODAL
+           ============================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem 2.5rem 2rem;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.25s ease;
+        }
+        .modal-box .modal-icon {
+            font-size: 3rem;
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .modal-box h2 {
+            font-size: 1.3rem;
+            color: #0a1e33;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .modal-box .modal-message {
+            color: #4a627f;
+            text-align: center;
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+        .modal-box .modal-record {
+            background: #f8fbff;
+            border: 1px solid #e6ecf5;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0 1.2rem 0;
+            font-size: 0.9rem;
+            color: #14273e;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .modal-box .modal-record strong {
+            color: #0a1e33;
+        }
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+        .modal-box .modal-actions .btn {
+            min-width: 100px;
+            justify-content: center;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+        }
+        .modal-box .modal-actions .btn-cancel {
+            background: #f1f5fa;
+            border-color: #d0dae8;
+            color: #1b3147;
+        }
+        .modal-box .modal-actions .btn-cancel:hover {
+            background: #e4eaf2;
+        }
+        .modal-box .modal-actions .btn-delete {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .modal-box .modal-actions .btn-delete:hover {
+            background: #c82333;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         @media (max-width: 700px) {
             .container {
                 padding: 1.2rem;
@@ -357,6 +467,14 @@
             }
             .add-form .actions {
                 justify-content: flex-end;
+            }
+            .modal-box {
+                padding: 1.5rem;
+            }
+            .modal-box .modal-actions .btn {
+                min-width: 80px;
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
             }
         }
     </style>
@@ -387,7 +505,6 @@
                 <select id="newType">
                     <option value="Doors">Doors</option>
                     <option value="Rail">Rail</option>
-               
                 </select>
             </div>
             <div class="field">
@@ -451,6 +568,27 @@
         <div class="footer">
             <span class="left"><i class="fas fa-pen"></i> double-click cell to edit</span>
             <span class="right"><i class="fas fa-trash"></i> click trash icon to delete</span>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    CUSTOM DELETE CONFIRMATION MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2>Delete Record?</h2>
+            <p class="modal-message">Are you sure you want to permanently delete this record?</p>
+            <div class="modal-record" id="modalRecordPreview">
+                <strong>Type:</strong> <span id="modalType">--</span><br />
+                <strong>Red:</strong> <span id="modalRed">--</span> &nbsp;|&nbsp; <strong>Blue:</strong> <span id="modalBlue">--</span><br />
+                <strong>Efficiency:</strong> <span id="modalEff">--</span> &nbsp;|&nbsp; <strong>Date:</strong> <span id="modalDate">--</span><br />
+                <strong>Weight:</strong> <span id="modalWeight">--</span>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="modalCancelBtn"><i class="fas fa-times"></i> Cancel</button>
+                <button class="btn btn-delete" id="modalConfirmBtn"><i class="fas fa-trash"></i> Delete</button>
+            </div>
         </div>
     </div>
 
@@ -524,6 +662,7 @@
         // ============================================================
         let currentData = loadData();
         let sortConfig = { col: null, asc: true };
+        let pendingDeleteIndex = -1;
 
         const tbody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
@@ -537,6 +676,17 @@
         const addForm = document.getElementById('addForm');
         const cancelAddBtn = document.getElementById('cancelAddBtn');
         const addBtn = document.getElementById('addBtn');
+
+        // Modal elements
+        const deleteModal = document.getElementById('deleteModal');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalType = document.getElementById('modalType');
+        const modalRed = document.getElementById('modalRed');
+        const modalBlue = document.getElementById('modalBlue');
+        const modalEff = document.getElementById('modalEff');
+        const modalDate = document.getElementById('modalDate');
+        const modalWeight = document.getElementById('modalWeight');
 
         const newType = document.getElementById('newType');
         const newRed = document.getElementById('newRed');
@@ -602,6 +752,52 @@
         }
 
         // ============================================================
+        //  SHOW DELETE MODAL
+        // ============================================================
+        function showDeleteModal(rowData, index) {
+            pendingDeleteIndex = index;
+            modalType.textContent = rowData[0] || '--';
+            modalRed.textContent = rowData[1] || '--';
+            modalBlue.textContent = rowData[2] || '--';
+            modalEff.textContent = rowData[3] || '--';
+            modalDate.textContent = rowData[4] || '--';
+            modalWeight.textContent = rowData[5] || '--';
+            deleteModal.classList.add('active');
+        }
+
+        function hideDeleteModal() {
+            deleteModal.classList.remove('active');
+            pendingDeleteIndex = -1;
+        }
+
+        function confirmDelete() {
+            if (pendingDeleteIndex !== -1 && pendingDeleteIndex < currentData.length) {
+                currentData.splice(pendingDeleteIndex, 1);
+                saveData(currentData);
+                render();
+            }
+            hideDeleteModal();
+        }
+
+        // Modal event listeners
+        modalCancelBtn.addEventListener('click', hideDeleteModal);
+        modalConfirmBtn.addEventListener('click', confirmDelete);
+
+        // Close modal on overlay click
+        deleteModal.addEventListener('click', (e) => {
+            if (e.target === deleteModal) {
+                hideDeleteModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && deleteModal.classList.contains('active')) {
+                hideDeleteModal();
+            }
+        });
+
+        // ============================================================
         //  RENDER
         // ============================================================
         function render() {
@@ -611,14 +807,12 @@
                 tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((row) => {
-                    // Find the actual index in currentData
                     const dataIndex = findDataIndex(row);
-                    // Create a unique ID for this row using the dataIndex
                     const rowId = dataIndex !== -1 ? dataIndex : Math.random().toString(36).substr(2, 9);
                     return `<tr data-row-id="${rowId}">
                         ${row.map(cell => `<td>${cell}</td>`).join('')}
                         <td>
-                            <button class="delete-btn" data-row-id="${rowId}" title="Delete record">
+                            <button class="delete-btn" data-index="${dataIndex}" title="Delete record">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -650,44 +844,32 @@
             });
 
             // ============================================================
-            //  DELETE BUTTON HANDLERS (FIXED)
+            //  DELETE BUTTON HANDLERS (using modal)
             // ============================================================
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    const rowId = this.dataset.rowId;
-                    
-                    // Find the row element
-                    const tr = this.closest('tr');
-                    if (!tr) return;
-                    
-                    // Get the row data from the displayed cells
-                    const cells = tr.querySelectorAll('td');
-                    if (cells.length < 7) return; // Need all columns + action
-                    
-                    // Build the row data from displayed cells (skip the last cell which is the action button)
-                    const rowData = [];
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowData.push(cells[i].textContent.trim());
+                    const index = parseInt(this.dataset.index);
+                    if (isNaN(index) || index < 0 || index >= currentData.length) {
+                        // Try to find by row data
+                        const tr = this.closest('tr');
+                        if (!tr) return;
+                        const cells = tr.querySelectorAll('td');
+                        if (cells.length < 7) return;
+                        const rowData = [];
+                        for (let i = 0; i < cells.length - 1; i++) {
+                            rowData.push(cells[i].textContent.trim());
+                        }
+                        const foundIndex = findDataIndex(rowData);
+                        if (foundIndex === -1) {
+                            alert('Could not find this record to delete.');
+                            return;
+                        }
+                        showDeleteModal(rowData, foundIndex);
+                    } else {
+                        const rowData = currentData[index];
+                        showDeleteModal(rowData, index);
                     }
-                    
-                    // Find this row in currentData
-                    const dataIndex = findDataIndex(rowData);
-                    
-                    if (dataIndex === -1) {
-                        alert('Could not find this record to delete. Please refresh and try again.');
-                        return;
-                    }
-                    
-                    // Confirm deletion
-                    if (!confirm(`Delete this record?\n\n${rowData.join(' | ')}`)) {
-                        return;
-                    }
-                    
-                    // Remove from data
-                    currentData.splice(dataIndex, 1);
-                    saveData(currentData);
-                    render();
                 });
             });
         }
@@ -707,13 +889,11 @@
                 return;
             }
 
-            // Validate date format
             if (date && !isValidDateUS(date)) {
                 alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
                 return;
             }
 
-            // If date is empty, use today
             if (!date) {
                 date = getTodayUS();
             }
@@ -877,15 +1057,14 @@
             const tr = td.closest('tr');
             if (!tr) return;
             const colIndex = td.cellIndex;
-            if (colIndex === 6) return; // Skip action column
+            if (colIndex === 6) return;
 
-            // Get the row data from displayed cells
             const cells = tr.querySelectorAll('td');
             const rowData = [];
             for (let i = 0; i < cells.length - 1; i++) {
                 rowData.push(cells[i].textContent.trim());
             }
-            
+
             const dataIndex = findDataIndex(rowData);
             if (dataIndex === -1) {
                 alert('Could not find this record to edit.');
@@ -908,7 +1087,6 @@
 
             const save = () => {
                 let newValue = input.value.trim();
-                // If editing the date column (index 4), validate format
                 if (colIndex === 4 && newValue && !isValidDateUS(newValue)) {
                     alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
                     input.value = oldValue;

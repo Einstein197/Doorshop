@@ -651,7 +651,13 @@
         // ============================================================
         let currentData = loadData();
         let sortConfig = { col: null, asc: true };
-        let pendingDeleteId = null;
+        let nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
+
+        // Ensure existing rows have IDs
+        currentData.forEach((row, i) => {
+            if (!row._id) row._id = i + 1;
+        });
+        nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
 
         const tbody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
@@ -727,22 +733,9 @@
         }
 
         // ============================================================
-        //  GENERATE UNIQUE ID
-        // ============================================================
-        let nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
-
-        function getRowId(row) {
-            if (!row._id) {
-                row._id = nextId++;
-            }
-            return row._id;
-        }
-
-        // ============================================================
         //  SHOW DELETE MODAL
         // ============================================================
         function showDeleteModal(rowData, id) {
-            pendingDeleteId = id;
             modalType.textContent = rowData[0] || '--';
             modalRed.textContent = rowData[1] || '--';
             modalBlue.textContent = rowData[2] || '--';
@@ -750,17 +743,18 @@
             modalDate.textContent = rowData[4] || '--';
             modalWeight.textContent = rowData[5] || '--';
             deleteModal.classList.add('active');
+            deleteModal.dataset.deleteId = id;
         }
 
         function hideDeleteModal() {
             deleteModal.classList.remove('active');
-            pendingDeleteId = null;
+            deleteModal.dataset.deleteId = '';
         }
 
         function confirmDelete() {
-            if (pendingDeleteId !== null) {
-                // Find the row with this ID
-                const index = currentData.findIndex(row => row._id === pendingDeleteId);
+            const id = parseInt(deleteModal.dataset.deleteId);
+            if (!isNaN(id)) {
+                const index = currentData.findIndex(row => row._id === id);
                 if (index !== -1) {
                     currentData.splice(index, 1);
                     saveData(currentData);
@@ -789,7 +783,7 @@
                 tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((row) => {
-                    const id = getRowId(row);
+                    const id = row._id;
                     return `<tr data-id="${id}">
                         ${row.slice(0, 6).map(cell => `<td>${cell}</td>`).join('')}
                         <td>
@@ -823,25 +817,29 @@
                     icon.style.opacity = '0.35';
                 }
             });
-
-            // ============================================================
-            //  DELETE BUTTON HANDLERS - SIMPLIFIED!
-            // ============================================================
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const id = parseInt(this.dataset.id);
-                    if (!isNaN(id)) {
-                        const row = currentData.find(r => r._id === id);
-                        if (row) {
-                            showDeleteModal(row, id);
-                        } else {
-                            alert('Record not found.');
-                        }
-                    }
-                });
-            });
         }
+
+        // ============================================================
+        //  EVENT DELEGATION FOR DELETE BUTTONS (FIXED!)
+        // ============================================================
+        tbody.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (!deleteBtn) return;
+
+            const id = parseInt(deleteBtn.dataset.id);
+            if (isNaN(id)) {
+                alert('Invalid record ID.');
+                return;
+            }
+
+            const row = currentData.find(r => r._id === id);
+            if (!row) {
+                alert('Record not found.');
+                return;
+            }
+
+            showDeleteModal(row, id);
+        });
 
         // ============================================================
         //  ADD RECORD
@@ -1004,7 +1002,6 @@
                     if (Array.isArray(data) && data.length > 0) {
                         if (confirm(`Load ${data.length} records from backup?`)) {
                             currentData = data.map(row => [...row]);
-                            // Assign new IDs
                             nextId = currentData.length + 1;
                             currentData.forEach((row, i) => row._id = i + 1);
                             saveData(currentData);
@@ -1084,11 +1081,6 @@
         // ============================================================
         //  INITIAL RENDER
         // ============================================================
-        // Ensure existing rows have IDs
-        currentData.forEach((row, i) => {
-            if (!row._id) row._id = i + 1;
-        });
-        nextId = currentData.length > 0 ? Math.max(...currentData.map(row => row._id || 0)) + 1 : 1;
         render();
     </script>
 </body>

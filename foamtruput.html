@@ -596,8 +596,7 @@
         // ============================================================
         //  FOAM TRUPUT DATA (US Date Format: MM/DD/YYYY)
         // ============================================================
-        const defaultData = [
-        ];
+        const defaultData = [];
 
         // ============================================================
         //  LOCAL STORAGE HELPERS
@@ -658,6 +657,9 @@
         let currentData = loadData();
         let sortConfig = { col: null, asc: true };
         let pendingDeleteIndex = -1;
+
+        // Unique ID counter for rows (for tracking)
+        let rowIdCounter = currentData.length;
 
         const tbody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
@@ -740,10 +742,14 @@
         //  FIND ROW INDEX IN currentData BY VALUES
         // ============================================================
         function findDataIndex(rowValues) {
-            return currentData.findIndex(row =>
-                row.length === rowValues.length &&
-                row.every((val, i) => val === rowValues[i])
-            );
+            for (let i = 0; i < currentData.length; i++) {
+                const row = currentData[i];
+                if (row.length === rowValues.length &&
+                    row.every((val, j) => String(val) === String(rowValues[j]))) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         // ============================================================
@@ -778,14 +784,12 @@
         modalCancelBtn.addEventListener('click', hideDeleteModal);
         modalConfirmBtn.addEventListener('click', confirmDelete);
 
-        // Close modal on overlay click
         deleteModal.addEventListener('click', (e) => {
             if (e.target === deleteModal) {
                 hideDeleteModal();
             }
         });
 
-        // Close modal on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && deleteModal.classList.contains('active')) {
                 hideDeleteModal();
@@ -802,9 +806,9 @@
                 tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((row) => {
+                    // Find the actual index in currentData
                     const dataIndex = findDataIndex(row);
-                    const rowId = dataIndex !== -1 ? dataIndex : Math.random().toString(36).substr(2, 9);
-                    return `<tr data-row-id="${rowId}">
+                    return `<tr data-row-id="${dataIndex}">
                         ${row.map(cell => `<td>${cell}</td>`).join('')}
                         <td>
                             <button class="delete-btn" data-index="${dataIndex}" title="Delete record">
@@ -839,31 +843,18 @@
             });
 
             // ============================================================
-            //  DELETE BUTTON HANDLERS (using modal)
+            //  DELETE BUTTON HANDLERS
             // ============================================================
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const index = parseInt(this.dataset.index);
-                    if (isNaN(index) || index < 0 || index >= currentData.length) {
-                        // Try to find by row data
-                        const tr = this.closest('tr');
-                        if (!tr) return;
-                        const cells = tr.querySelectorAll('td');
-                        if (cells.length < 7) return;
-                        const rowData = [];
-                        for (let i = 0; i < cells.length - 1; i++) {
-                            rowData.push(cells[i].textContent.trim());
-                        }
-                        const foundIndex = findDataIndex(rowData);
-                        if (foundIndex === -1) {
-                            alert('Could not find this record to delete.');
-                            return;
-                        }
-                        showDeleteModal(rowData, foundIndex);
-                    } else {
+                    
+                    if (!isNaN(index) && index >= 0 && index < currentData.length) {
                         const rowData = currentData[index];
                         showDeleteModal(rowData, index);
+                    } else {
+                        alert('Could not find this record to delete. Try refreshing the page.');
                     }
                 });
             });
@@ -1044,7 +1035,7 @@
         });
 
         // ============================================================
-        //  EDIT CELL (double-click)
+        //  EDIT CELL (double-click) - FIXED
         // ============================================================
         tbody.addEventListener('dblclick', (e) => {
             const td = e.target.closest('td');
@@ -1052,16 +1043,17 @@
             const tr = td.closest('tr');
             if (!tr) return;
             const colIndex = td.cellIndex;
-            if (colIndex === 6) return;
+            if (colIndex === 6) return; // Skip action column
 
-            const cells = tr.querySelectorAll('td');
-            const rowData = [];
-            for (let i = 0; i < cells.length - 1; i++) {
-                rowData.push(cells[i].textContent.trim());
+            // Get the data-index from the row
+            const rowId = tr.dataset.rowId;
+            if (rowId === undefined) {
+                alert('Could not find this record to edit.');
+                return;
             }
 
-            const dataIndex = findDataIndex(rowData);
-            if (dataIndex === -1) {
+            const dataIndex = parseInt(rowId);
+            if (isNaN(dataIndex) || dataIndex < 0 || dataIndex >= currentData.length) {
                 alert('Could not find this record to edit.');
                 return;
             }
@@ -1087,6 +1079,10 @@
                     input.value = oldValue;
                     input.focus();
                     return;
+                }
+                // If editing Efficiency (colIndex 3), auto-add % if missing
+                if (colIndex === 3 && newValue && !newValue.includes('%')) {
+                    newValue = newValue + '%';
                 }
                 currentData[dataIndex][colIndex] = newValue || oldValue;
                 saveData(currentData);

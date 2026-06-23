@@ -720,6 +720,11 @@
 
         async function deleteRecordFromCloud(id) {
             try {
+                // Make sure id is a valid number
+                if (!id || isNaN(parseInt(id))) {
+                    console.error('Invalid ID for deletion:', id);
+                    return null;
+                }
                 const response = await fetch(`${API_URL}/api/records/${id}`, {
                     method: 'DELETE'
                 });
@@ -732,6 +737,11 @@
 
         async function updateRecordInCloud(id, record) {
             try {
+                // Make sure id is a valid number
+                if (!id || isNaN(parseInt(id))) {
+                    console.error('Invalid ID for update:', id);
+                    return null;
+                }
                 const response = await fetch(`${API_URL}/api/records/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -755,6 +765,7 @@
                 if (data && Array.isArray(data)) {
                     currentData = data.map(row => {
                         const arr = [row.type, row.red, row.blue, row.efficiency, row.date, row.weight];
+                        // Store the numeric ID
                         arr._id = row.id;
                         return arr;
                     });
@@ -896,11 +907,14 @@
                 if (result && result.success) {
                     await loadData();
                 } else {
+                    // Fallback: remove from local array
                     const index = currentData.findIndex(row => row._id === deleteTargetId);
                     if (index !== -1) {
                         currentData.splice(index, 1);
                         localStorage.setItem('foamTruputData', JSON.stringify(currentData));
                         render();
+                    } else {
+                        alert('Could not delete record. Please try again.');
                     }
                 }
             }
@@ -929,7 +943,8 @@
                 const id = deleteBtn.dataset.id;
                 if (!id) return;
 
-                const row = currentData.find(r => r._id === id);
+                // Use == to compare numeric values (string vs number)
+                const row = currentData.find(r => r._id == id);
                 if (!row) {
                     alert('Record not found.');
                     return;
@@ -980,6 +995,7 @@
             if (result && result.success) {
                 await loadData();
             } else {
+                // Fallback to localStorage
                 const newRow = [type, red, blue, finalEff ? finalEff + '%' : '', date, weight];
                 newRow._id = 'local_' + Date.now();
                 currentData.push(newRow);
@@ -988,6 +1004,7 @@
                 setStatus(false, 'Offline (saved locally)');
             }
 
+            // Reset form
             newType.value = 'Doors';
             newRed.value = '0';
             newBlue.value = '0';
@@ -1176,7 +1193,7 @@
                 const id = tr.dataset.id;
                 if (!id) return;
 
-                const dataIndex = currentData.findIndex(row => row._id === id);
+                const dataIndex = currentData.findIndex(row => row._id == id);
                 if (dataIndex === -1) return;
 
                 const oldValue = currentData[dataIndex][colIndex];
@@ -1254,6 +1271,10 @@
 
         // Expose for other pages (foam calculator)
         window.getLastDoorWeight = getLastDoorWeight;
+
+        console.log('✅ Foam Truput Tracker loaded');
+        console.log('📡 API URL:', API_URL);
+        console.log('📊 Records loaded:', currentData.length);
     </script>
 </body>
 </html>

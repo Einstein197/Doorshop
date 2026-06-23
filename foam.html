@@ -4,333 +4,609 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <title>Foam</title>
+    <title>Foam Calculator</title>
     <style>
+        /* ── Keep original styles but adapt to dark glass ── */
+        * {
+            box-sizing: border-box;
+        }
         body {
             text-align: center;
             padding: 20px;
-            font-family: Times, sans-serif;
-            background-color: #e3fdf5;
-            background-size: cover;
+            font-family: 'Inter', Times, sans-serif;
+            background: transparent;
+            color: var(--text, #eef2ff);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0;
         }
 
-        #volume,
-        #result,
-        #lbsResult,
-        #seconds,
-        #dividebyseconds,
-        #additionalInfo,
-        #Seconds {
-            font-weight: bold;
+        /* ── Inherit Moon Wallet colors ── */
+        :root {
+            --primary: #4f6ef7;
+            --primary-dark: #3a56e4;
+            --secondary: #2dd4bf;
+            --green: #10b981;
+            --red: #f43f5e;
+            --bg: radial-gradient(ellipse at top left, #121c38, #050811);
+            --text: #eef2ff;
+            --text-2: #94a3b8;
+            --text-3: #475569;
+            --glass: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.09);
+            --radius: 20px;
+            --radius-sm: 12px;
         }
 
-        header {
-            background-color: #4CAF50;
-            color: black;
-            padding: 2px;
+        .calculator-wrapper {
+            width: 100%;
+            max-width: 800px;
+            background: var(--glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px 28px 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* ── Temperature ── */
+        #currentTemperature {
+            font-size: 14px;
+            color: var(--text-2);
+            text-align: right;
+            margin-bottom: 16px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 40px;
+            display: inline-block;
+            float: right;
+            border: 1px solid var(--glass-border);
+            font-weight: 500;
+        }
+        #currentTemperature span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ── Form Elements ── */
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
+            margin-right: 6px;
+            letter-spacing: 0.04em;
+        }
+
+        input[type="text"], select {
+            font-family: 'Inter', Times, sans-serif;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            outline: none;
+            margin: 4px 4px 8px 4px;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.15);
+            background: rgba(0,0,0,0.35);
+        }
+        input[type="text"]::placeholder {
+            color: var(--text-3);
+            font-weight: 400;
+            font-size: 14px;
+        }
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            min-width: 120px;
+        }
+        select option {
+            background: #0d1225;
+            color: var(--text);
+        }
+
+        /* ── Tru-put Display - Just the number ── */
+        .truput-display {
+            display: inline-block;
+            background: rgba(79,110,247,0.12);
+            border: 1px solid rgba(79,110,247,0.2);
+            border-radius: var(--radius-sm);
+            padding: 6px 16px;
+            min-width: 80px;
             text-align: center;
         }
-
-        nav {
-            text-align: center;
-            margin: 20px;
+        .truput-display .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
         }
 
-        nav a {
-            margin: 0 15px;
-            color: black;
-            text-decoration: none;
+        /* ── Results ── */
+        #lbsResult, #seconds, #dividebyseconds, #additionalInfo, #foamMark {
+            font-weight: 600;
+            color: var(--text);
+            margin: 6px 0;
+            font-size: 15px;
         }
 
-        #volume span,
-        #result span,
-        #lbsResult span,
-        #seconds span,
-        #dividebyseconds span,
-        #additionalInfo span,
-        #Seconds span {
-            font-weight: normal;
-            color: green;
+        #lbsResult span, #seconds span,
+        #dividebyseconds span, #additionalInfo span, #foamMark span {
+            font-weight: 700;
+            color: var(--primary);
         }
-        #foamMark {
-            color: black;
-        }
+
+        #lbsResult span:nth-child(2) { color: var(--secondary); }
+        #lbsResult span:nth-child(3) { color: var(--green); }
 
         #foamMark b {
-            font-weight: bold;
+            font-weight: 700;
+            color: var(--text);
         }
-
         #foamMark span {
-            font-weight: normal;
-            color: green;
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 18px;
         }
 
-        #Truput {
-            color: blue;
-        }
-
-        /* Custom Keyboard */
+        /* ── Custom Keyboard ── */
         .keyboard {
             display: none;
             grid-template-columns: repeat(3, 60px);
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            margin-top: 16px;
             justify-content: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
         }
 
         .key {
             padding: 10px;
             font-size: 18px;
+            font-weight: 600;
             text-align: center;
-            background-color: #ccc;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
             cursor: pointer;
             user-select: none;
+            color: var(--text-2);
+            transition: all 0.15s;
+        }
+        .key:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--text);
+            border-color: var(--primary);
+        }
+        .key:active {
+            transform: scale(0.95);
         }
         .space {
             padding: 10px;
             font-size: 18px;
             text-align: center;
-            background-color: #ccc;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
             cursor: pointer;
             user-select: none;
-            grid-column: span 3
+            grid-column: span 3;
+            color: var(--text-2);
+            transition: all 0.15s;
+        }
+        .space:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--text);
+            border-color: var(--primary);
         }
 
-        input[type="text"] {
-            font-size: 16px; /* Prevents mobile zoom */
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .calculator-wrapper { padding: 16px 14px 20px; }
+            input[type="text"] { width: 100px; }
+            select { min-width: 100px; }
+            #currentTemperature { float: none; display: inline-block; margin: 0 auto 12px; }
+            .truput-display { min-width: 60px; padding: 4px 12px; }
+            .truput-display .value { font-size: 17px; }
+        }
+        @media (max-width: 400px) {
+            input[type="text"] { width: 80px; font-size: 14px; }
+            .keyboard { grid-template-columns: repeat(3, 50px); }
+            .key, .space { font-size: 16px; padding: 8px; }
         }
 
+        /* ── Clean spacing ── */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 4px 8px;
+            margin: 6px 0;
+        }
+        .row-label {
+            font-weight: 600;
+            color: var(--text-2);
+            font-size: 13px;
+        }
+        .mt-2 { margin-top: 12px; }
+        .mb-2 { margin-bottom: 12px; }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Foam</h1>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="foam.html">Foam</a>
-            <a href="gasket.html">Gasket</a>
-            <a href="calculator.html">Calculator</a>
-	    <a href="https://172.16.20.104:5000">Door Upload</a>
-        </nav>
-    </header>
-    <div>
-        &nbsp;
+
+<div class="calculator-wrapper">
+
+    <!-- Temperature -->
+    <div class="clearfix">
+        <p id="currentTemperature">🌡️ Current Temperature: <span id="temperatureNumber"></span> °F</p>
     </div>
 
-    <section>
-        <div>
-            <p id="currentTemperature">Current Temperature: <span id="temperatureNumber"></span> °F</p>
-            <p><label for="weightInput">Weight:</label>
-            <input type="text" id="weightInput" inputmode="numeric" placeholder="1234" size="4" style="border-radius: 10px;"> <span id="Truput"></span></p>
-
-            <label for="lengthInput">L</label>
-            <input type="text" id="lengthInput" inputmode="none" placeholder="2 1/2" size="7" style="border-radius: 10px;">
-
-            <label for="widthInput">W</label>
-            <input type="text" id="widthInput" inputmode="none" placeholder="1 1/2" size="7" style="border-radius: 10px;">
-
-            <label for="heightDropdown">H</label>
-            <select id="heightDropdown" style="border-radius: 10px;">
-	      <option value="1.75">1 3/4" Door</option>
-	      <option value="1.875">1 7/8" Door</option>
-              <option value="3.75" selected>4" Door</option>
-              <option value="3.875">4" Panel</option>
-              <option value="5.75">6" Door</option>
-              <option value="4.875">5" Panel</option>
-            </select>
-
-            <!-- Custom Keyboard -->
-            <div class="keyboard" id="customKeyboard">
-                <div class="key" onclick="addToInput('1', event)">1</div>
-                <div class="key" onclick="addToInput('2', event)">2</div>
-                <div class="key" onclick="addToInput('3', event)">3</div>
-                <div class="key" onclick="addToInput('4', event)">4</div>
-                <div class="key" onclick="addToInput('5', event)">5</div>
-                <div class="key" onclick="addToInput('6', event)">6</div>
-                <div class="key" onclick="addToInput('7', event)">7</div>
-                <div class="key" onclick="addToInput('8', event)">8</div>
-                <div class="key" onclick="addToInput('9', event)">9</div>
-                <div class="key" onclick="addToInput('/', event)">/</div>
-                <div class="key" onclick="addToInput('0', event)">0</div>
-                <div class="key" onclick="deleteLast(), event">Del</div>
-                <div class="space" onclick="addToInput(' ', event)">Space</div>
-            </div>
-            <div>
-                &nbsp;
-            </div>
-
-
-
-            <p id="volume"><span id="volumeNumber"></span></p>
-            <p id="result"><span id="resultNumber"></span></p>
-            <p id="lbsResult">Lbs: <span id="lbsResultNumber"></span> Bagshot: <span id="bagshotNumber"></span> Total: <span id="totalNumber"></span></p>
-            <p id="seconds">Seconds: <span id="secondsNumber"></span></p>
-
-            <label for="minusseconds"><b>-SEC:</b></label>
-            <input type="text" id="minusseconds" inputmode="decimal" placeholder="0" size="3" style="border-radius: 10px;">
-
-            <label for="dividebysecondsinput"><b>Seconds/</b></label>
-            <input type="text" id="dividebysecondsinput" inputmode="numeric" placeholder="0" size="1" style="border-radius: 10px;">
-
-            <p id="dividebyseconds">Total Seconds: <span id="totalSecondsNumber"></span></p>
-            <p id="additionalInfo"><span id="additionalSecondsNumber"></span></p>
-            <p id="foamMark"><b>Foam Mark:</b> <span id="FoamMarkValue"></span></p>
+    <!-- Inputs - Tru-put just shows the number -->
+    <div class="row">
+        <label for="truputDisplay">Tru-put:</label>
+        <div class="truput-display">
+            <span class="value" id="truputValue">--</span>
         </div>
-    </section>
+    </div>
 
-    <footer>
-    </footer>
+    <div class="row">
+        <label for="lengthInput">L</label>
+        <input type="text" id="lengthInput" inputmode="none" placeholder="2 1/2" size="7">
 
-    <script>
-        function parseFractionOrNumber(input) {
-            if (input.includes(' ')) {
-                var parts = input.split(' ');
-                var wholeNumber = parseFloat(parts[0]) || 0;
-                var fractionParts = parts[1].split('/');
-                var fraction = parseFloat(fractionParts[0]) / parseFloat(fractionParts[1]) || 0;
-                return wholeNumber + fraction;
-            } else {
-                return parseFloat(input) || 0;
-            }
+        <label for="widthInput">W</label>
+        <input type="text" id="widthInput" inputmode="none" placeholder="1 1/2" size="7">
+
+        <label for="heightDropdown">H</label>
+        <select id="heightDropdown">
+            <option value="1.75">1 3/4" Door</option>
+            <option value="1.875">1 7/8" Door</option>
+            <option value="3.75" selected>4" Door</option>
+            <option value="3.875">4" Panel</option>
+            <option value="5.75">6" Door</option>
+            <option value="4.875">5" Panel</option>
+        </select>
+    </div>
+
+    <!-- Custom Keyboard -->
+    <div class="keyboard" id="customKeyboard">
+        <div class="key" onclick="addToInput('1', event)">1</div>
+        <div class="key" onclick="addToInput('2', event)">2</div>
+        <div class="key" onclick="addToInput('3', event)">3</div>
+        <div class="key" onclick="addToInput('4', event)">4</div>
+        <div class="key" onclick="addToInput('5', event)">5</div>
+        <div class="key" onclick="addToInput('6', event)">6</div>
+        <div class="key" onclick="addToInput('7', event)">7</div>
+        <div class="key" onclick="addToInput('8', event)">8</div>
+        <div class="key" onclick="addToInput('9', event)">9</div>
+        <div class="key" onclick="addToInput('/', event)">/</div>
+        <div class="key" onclick="addToInput('0', event)">0</div>
+        <div class="key" onclick="deleteLast()" style="color:var(--red);">Del</div>
+        <div class="space" onclick="addToInput(' ', event)">Space</div>
+    </div>
+
+    <!-- Results -->
+    <div class="mt-2">
+        <p id="lbsResult">Lbs: <span id="lbsResultNumber"></span> Bagshot: <span id="bagshotNumber"></span> Total: <span id="totalNumber"></span></p>
+        <p id="seconds">Seconds: <span id="secondsNumber"></span></p>
+    </div>
+
+    <!-- Seconds adjustments -->
+    <div class="row">
+        <label for="minusseconds" style="font-weight:700; color:var(--text);">-SEC:</label>
+        <input type="text" id="minusseconds" inputmode="decimal" placeholder="0" size="3">
+
+        <label for="dividebysecondsinput" style="font-weight:700; color:var(--text);">Seconds/</label>
+        <input type="text" id="dividebysecondsinput" inputmode="numeric" placeholder="0" size="1">
+    </div>
+
+    <div class="mt-2" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 24px; align-items: center;">
+        <p id="dividebyseconds" style="margin: 0;">Total Seconds: <span id="totalSecondsNumber"></span></p>
+        <p id="additionalInfo" style="margin: 0;">Divided Seconds: <span id="additionalSecondsNumber"></span></p>
+        <p id="foamMark" style="margin: 0;"><b>Foam Mark:</b> <span id="FoamMarkValue"></span></p>
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    //  CONFIGURATION - Point to your Cloudflare Worker
+    // ============================================================
+    const API_URL = 'https://foam-truput.shadowlegendcg.workers.dev';
+
+    // ============================================================
+    //  STATE
+    // ============================================================
+    var currentTruputWeight = 0;
+
+    // ============================================================
+    //  FETCH LAST DOOR WEIGHT FROM WORKER
+    // ============================================================
+    async function fetchLastDoorWeight() {
+        try {
+            const response = await fetch(`${API_URL}/api/last-door-weight`);
+            if (!response.ok) throw new Error('API error: ' + response.status);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching last door weight:', error);
+            return null;
         }
-        function formatFraction(value) {
-            const tolerance = 1e-6;
-            const whole = Math.floor(value);
-            const decimal = value - whole;
+    }
 
-            // Find denominator up to 16
-            let bestNumerator = 0;
-            let bestDenominator = 1;
-            let minError = 1;
+    // ============================================================
+    //  FETCH ALL RECORDS (fallback)
+    // ============================================================
+    async function fetchRecords() {
+        try {
+            const response = await fetch(`${API_URL}/api/records`);
+            if (!response.ok) throw new Error('API error: ' + response.status);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching records:', error);
+            return null;
+        }
+    }
 
-            for (let denominator = 1; denominator <= 16; denominator++) {
-                let numerator = Math.round(decimal * denominator);
-                let error = Math.abs(decimal - (numerator / denominator));
-                if (error < minError - tolerance) {
-                    bestNumerator = numerator;
-                    bestDenominator = denominator;
-                    minError = error;
+    // ============================================================
+    //  LOAD TRU-PUT WEIGHT FROM WORKER
+    // ============================================================
+    async function loadTruputWeight() {
+        try {
+            // Try to get the last door weight directly
+            let data = await fetchLastDoorWeight();
+            
+            // If that fails, try to get all records and find the last door
+            if (!data || !data.weight) {
+                const records = await fetchRecords();
+                if (records && Array.isArray(records)) {
+                    const doorRecords = records.filter(row => 
+                        row.type && row.type.toLowerCase() === 'doors'
+                    );
+                    if (doorRecords.length > 0) {
+                        data = doorRecords[doorRecords.length - 1];
+                    }
                 }
             }
 
-            if (bestNumerator === 0) {
-                return whole.toString();
+            if (data && data.weight) {
+                currentTruputWeight = parseFloat(data.weight);
+                const truputVal = calculateTruput(currentTruputWeight);
+                document.getElementById("truputValue").textContent = truputVal.toFixed(4);
+                updateCalculation();
+            } else {
+                // Fallback to localStorage
+                fallbackToLocalStorage();
             }
-
-            if (whole === 0) {
-                return `${bestNumerator}/${bestDenominator}`;
-            }
-
-            return `${whole} ${bestNumerator}/${bestDenominator}`;
+        } catch (error) {
+            console.error('Error loading from Worker:', error);
+            fallbackToLocalStorage();
         }
-        function updateCalculation() {
-            var lengthInput = document.getElementById("lengthInput").value.trim();
-            var widthInput = document.getElementById("widthInput").value.trim();
-            var weightInput = document.getElementById("weightInput").value.trim();
-            var length = parseFractionOrNumber(lengthInput);
-            var width = parseFractionOrNumber(widthInput);
-            var weight = parseFloat(weightInput) || 0;
-            var fixedInput = parseFloat(document.getElementById("heightDropdown").value);
+    }
 
-            var volume = length * width * fixedInput;
-            var result = volume / 1728;
-            var lbsResult = result * 2.4;
-            var bagshot = 12 * (weight * 10 / 454 / 0.6 / 100);
-            var totalLbsAndBagshot = lbsResult + bagshot;
-
-            var seconds = lbsResult / (weight * 10 / 454 / 0.6 / 100);
-
-            document.getElementById("volume").innerHTML = "<span id='volumeNumber'>" + "</span>";
-            document.getElementById("result").innerHTML = "<span id='resultNumber'>" + "</span>";
-            document.getElementById("lbsResult").innerHTML = "Lbs: <span id='lbsResultNumber'>" + lbsResult.toFixed(2) + "</span> Bagshot: <span id='bagshotNumber'>" + bagshot.toFixed(2) + "</span> Total: <span id='totalNumber'>" + totalLbsAndBagshot.toFixed(2) + "</span>";
-            document.getElementById("seconds").innerHTML = "Seconds: <span id='secondsNumber'>" + seconds.toFixed(2) + "</span>";
-
-            document.getElementById("Truput").innerText = "" + (weight * 10 / 454 / 0.6 / 100).toFixed(4);
-
-            var dividebysecondsinput = document.getElementById("dividebysecondsinput").value.trim();
-            var additionalSeconds = parseFloat(dividebysecondsinput) || 0;
-            var minusseconds = document.getElementById("minusseconds").value.trim();
-            var totalSeconds = seconds - (minusseconds || 0);
-            document.getElementById("dividebyseconds").innerHTML = "Total Seconds: <span id='totalSecondsNumber'>" + totalSeconds.toFixed(2) + "</span>";
-
-            var adjustedSeconds = totalSeconds / (parseFloat(dividebysecondsinput) || 0);
-            document.getElementById("additionalInfo").innerHTML = "Divided Seconds:  <span id='additionalSecondsNumber'>" + adjustedSeconds.toFixed(2) + "</span>";
-            var foamMark = (length / 2) - 4;
-            document.getElementById("FoamMarkValue").innerText = formatFraction(foamMark);
+    // ============================================================
+    //  FALLBACK: Load from localStorage
+    // ============================================================
+    function fallbackToLocalStorage() {
+        try {
+            const stored = localStorage.getItem('foamTruputData');
+            if (stored) {
+                const data = JSON.parse(stored);
+                if (Array.isArray(data) && data.length > 0) {
+                    const doorRecords = data.filter(row => 
+                        row[0] && row[0].toString().toLowerCase() === 'doors'
+                    );
+                    if (doorRecords.length > 0) {
+                        const lastDoor = doorRecords[doorRecords.length - 1];
+                        const weightValue = lastDoor[5];
+                        if (weightValue && !isNaN(parseFloat(weightValue))) {
+                            currentTruputWeight = parseFloat(weightValue);
+                            const truputVal = calculateTruput(currentTruputWeight);
+                            document.getElementById("truputValue").textContent = truputVal.toFixed(4);
+                            updateCalculation();
+                            return;
+                        }
+                    }
+                }
+            }
+            document.getElementById("truputValue").textContent = '--';
+            currentTruputWeight = 0;
+            updateCalculation();
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+            document.getElementById("truputValue").textContent = '--';
+            currentTruputWeight = 0;
+            updateCalculation();
         }
+    }
 
-        function handleFocus(event) {
-            currentInputField = event.target;
-            document.getElementById("customKeyboard").style.display = "grid";
-            // Clear input field if it was previously focused
-            if (currentInputField && currentInputField.dataset.wasFocused) {
-                currentInputField.value = '';
-                delete currentInputField.dataset.wasFocused;
+    // ============================================================
+    //  CALCULATE TRU-PUT VALUE
+    // ============================================================
+    function calculateTruput(weight) {
+        return weight * 10 / 454 / 0.6 / 100;
+    }
+
+    // ============================================================
+    //  PARSE FRACTION
+    // ============================================================
+    function parseFractionOrNumber(input) {
+        if (input.includes(' ')) {
+            var parts = input.split(' ');
+            var wholeNumber = parseFloat(parts[0]) || 0;
+            var fractionParts = parts[1].split('/');
+            var fraction = parseFloat(fractionParts[0]) / parseFloat(fractionParts[1]) || 0;
+            return wholeNumber + fraction;
+        } else {
+            return parseFloat(input) || 0;
+        }
+    }
+
+    // ============================================================
+    //  FORMAT FRACTION
+    // ============================================================
+    function formatFraction(value) {
+        const tolerance = 1e-6;
+        const whole = Math.floor(value);
+        const decimal = value - whole;
+
+        let bestNumerator = 0;
+        let bestDenominator = 1;
+        let minError = 1;
+
+        for (let denominator = 1; denominator <= 16; denominator++) {
+            let numerator = Math.round(decimal * denominator);
+            let error = Math.abs(decimal - (numerator / denominator));
+            if (error < minError - tolerance) {
+                bestNumerator = numerator;
+                bestDenominator = denominator;
+                minError = error;
             }
         }
 
-        function handleBlur(event) {
-            if (currentInputField) {
-                // Mark input field as focused
-                currentInputField.dataset.wasFocused = true;
-            }
+        if (bestNumerator === 0) {
+            return whole.toString();
         }
-
-        document.getElementById("weightInput").addEventListener("input", updateCalculation);
-        document.getElementById("lengthInput").addEventListener("input", updateCalculation);
-        document.getElementById("widthInput").addEventListener("input", updateCalculation);
-        document.getElementById("heightDropdown").addEventListener("change", updateCalculation);
-        document.getElementById("minusseconds").addEventListener("input", updateCalculation);
-        document.getElementById("dividebysecondsinput").addEventListener("input", updateCalculation);
-
-        // Custom Keyboard Functionality
-                function addToInput(character, event) {
-            if (currentInputField) {
-                event.stopPropagation(); // Prevents the event from bubbling up and causing unintended side effects
-                currentInputField.value += character;
-                updateCalculation(); // Call the updateCalculation function after input is updated
-            }
+        if (whole === 0) {
+            return bestNumerator + '/' + bestDenominator;
         }
+        return whole + ' ' + bestNumerator + '/' + bestDenominator;
+    }
 
+    // ============================================================
+    //  UPDATE CALCULATION
+    // ============================================================
+    function updateCalculation() {
+        var lengthInput = document.getElementById("lengthInput").value.trim();
+        var widthInput = document.getElementById("widthInput").value.trim();
+        var length = parseFractionOrNumber(lengthInput);
+        var width = parseFractionOrNumber(widthInput);
+        var weight = currentTruputWeight;
+        var fixedInput = parseFloat(document.getElementById("heightDropdown").value);
 
+        var volume = length * width * fixedInput;
+        var result = volume / 1728;
+        var lbsResult = result * 2.4;
+        var bagshot = 12 * (weight * 10 / 454 / 0.6 / 100);
+        var totalLbsAndBagshot = lbsResult + bagshot;
 
-        function deleteLast() {
-            if (currentInputField && currentInputField.value.length > 0) {
-                currentInputField.value = currentInputField.value.slice(0, -1);
-                updateCalculation(); // Call updateCalculation after deletion
-            }
+        var seconds = lbsResult / (weight * 10 / 454 / 0.6 / 100);
+
+        document.getElementById("lbsResultNumber").textContent = lbsResult.toFixed(2);
+        document.getElementById("bagshotNumber").textContent = bagshot.toFixed(2);
+        document.getElementById("totalNumber").textContent = totalLbsAndBagshot.toFixed(2);
+        document.getElementById("secondsNumber").textContent = seconds.toFixed(2);
+
+        var dividebysecondsinput = document.getElementById("dividebysecondsinput").value.trim();
+        var minusseconds = document.getElementById("minusseconds").value.trim();
+        var totalSeconds = seconds - (minusseconds || 0);
+        document.getElementById("totalSecondsNumber").textContent = totalSeconds.toFixed(2);
+
+        var adjustedSeconds = totalSeconds / (parseFloat(dividebysecondsinput) || 0);
+        document.getElementById("additionalSecondsNumber").textContent = adjustedSeconds.toFixed(2);
+
+        var foamMark = (length / 2) - 4;
+        document.getElementById("FoamMarkValue").textContent = formatFraction(foamMark);
+    }
+
+    // ============================================================
+    //  KEYBOARD HANDLING
+    // ============================================================
+    var currentInputField = null;
+
+    function addToInput(character, event) {
+        if (currentInputField) {
+            if (event) event.stopPropagation();
+            currentInputField.value += character;
+            updateCalculation();
         }
+    }
 
+    function deleteLast() {
+        if (currentInputField && currentInputField.value.length > 0) {
+            currentInputField.value = currentInputField.value.slice(0, -1);
+            updateCalculation();
+        }
+    }
 
-        let currentInputField = null;
+    function handleFocus(event) {
+        currentInputField = event.target;
+        document.getElementById("customKeyboard").style.display = "grid";
+        if (currentInputField && currentInputField.dataset.wasFocused) {
+            currentInputField.value = '';
+            delete currentInputField.dataset.wasFocused;
+        }
+    }
 
-        document.getElementById("lengthInput").addEventListener("focus", handleFocus);
-        document.getElementById("lengthInput").addEventListener("blur", handleBlur);
-        document.getElementById("widthInput").addEventListener("focus", handleFocus);
-        document.getElementById("widthInput").addEventListener("blur", handleBlur);
+    function handleBlur(event) {
+        if (currentInputField) {
+            currentInputField.dataset.wasFocused = true;
+        }
+    }
 
-        document.addEventListener("click", function(event) {
-            if (!event.target.closest('.key') && !event.target.closest('input')) {
-                document.getElementById("customKeyboard").style.display = "none";
-            }
+    // ============================================================
+    //  EVENT LISTENERS
+    // ============================================================
+    document.getElementById("lengthInput").addEventListener("input", updateCalculation);
+    document.getElementById("widthInput").addEventListener("input", updateCalculation);
+    document.getElementById("heightDropdown").addEventListener("change", updateCalculation);
+    document.getElementById("minusseconds").addEventListener("input", updateCalculation);
+    document.getElementById("dividebysecondsinput").addEventListener("input", updateCalculation);
+
+    document.getElementById("lengthInput").addEventListener("focus", handleFocus);
+    document.getElementById("lengthInput").addEventListener("blur", handleBlur);
+    document.getElementById("widthInput").addEventListener("focus", handleFocus);
+    document.getElementById("widthInput").addEventListener("blur", handleBlur);
+    document.getElementById("minusseconds").addEventListener("focus", handleFocus);
+    document.getElementById("minusseconds").addEventListener("blur", handleBlur);
+    document.getElementById("dividebysecondsinput").addEventListener("focus", handleFocus);
+    document.getElementById("dividebysecondsinput").addEventListener("blur", handleBlur);
+
+    document.addEventListener("click", function(event) {
+        if (!event.target.closest('.key') && !event.target.closest('input')) {
+            document.getElementById("customKeyboard").style.display = "none";
+        }
+    });
+
+    // ============================================================
+    //  WEATHER API
+    // ============================================================
+    function getCurrentTemperature() {
+        var apiKey = 'd3f8c49491c00adaf128188c2a54ac6c';
+        var city = 'wagner';
+        var apiUrl = 'https://api.openweathermap.org/data/2.5/weather?q=' + city + '&appid=' + apiKey + '&units=imperial';
+
+        $.get(apiUrl, function(data) {
+            var temperature = data.main.temp;
+            document.getElementById("temperatureNumber").textContent = temperature.toFixed(2);
+        }).fail(function() {
+            document.getElementById("temperatureNumber").textContent = '--';
         });
+    }
 
-
-        function getCurrentTemperature() {
-            var apiKey = 'd3f8c49491c00adaf128188c2a54ac6c';
-            var city = 'wagner';
-            var apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=imperial`;
-
-            $.get(apiUrl, function (data) {
-                var temperature = data.main.temp;
-                document.getElementById("temperatureNumber").innerText = temperature.toFixed(2);
-            });
-        }
-
-        getCurrentTemperature();
-    </script>
+    // ============================================================
+    //  INIT
+    // ============================================================
+    loadTruputWeight();
+    getCurrentTemperature();
+</script>
 
 </body>
 </html>

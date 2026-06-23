@@ -68,7 +68,7 @@
         /* ── App Shell ── */
         .app-shell { display:flex; height:100vh; position:relative; z-index:1; }
 
-        /* ── Sidebar (desktop) ── */
+        /* ── Sidebar (Desktop Only) ── */
         .sidebar {
             width: var(--sidebar-w);
             flex-shrink: 0;
@@ -80,7 +80,6 @@
             background: rgba(8,12,24,0.85);
             backdrop-filter: blur(20px);
             position: fixed; top:0; left:0; z-index:100;
-            transition: transform 0.3s ease;
         }
         .sidebar-logo { display:flex; align-items:center; gap:10px; padding:6px 10px; margin-bottom:20px; flex-shrink:0; }
         .logo-icon { width:34px; height:34px; background:linear-gradient(135deg,var(--primary),var(--secondary)); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -107,39 +106,6 @@
         .avatar { width:32px; height:32px; border-radius:50%; overflow:hidden; border:2px solid var(--primary); background:var(--primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:600; font-size:12px; flex-shrink:0; }
         .user-name { font-size:12px; font-weight:600; color:var(--text); }
         .user-handle { font-size:10px; color:var(--text-3); }
-
-        /* ── Sidebar Toggle (Mobile) ── */
-        .sidebar-toggle {
-            display: none;
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 200;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            color: var(--text-2);
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s;
-        }
-        .sidebar-toggle:hover { background:rgba(255,255,255,0.1); color:var(--text); }
-        .sidebar-toggle svg { width:22px; height:22px; fill:currentColor; }
-
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 90;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar-overlay.active {
-            display: block;
-            opacity: 1;
-        }
 
         /* ── Main Area ── */
         .main-area { flex:1; display:flex; flex-direction:column; margin-left:var(--sidebar-w); height:100vh; overflow:hidden; }
@@ -309,23 +275,10 @@
 
         /* ── Responsive ── */
         @media (max-width:767px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .sidebar-toggle {
-                display: block;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
+            .sidebar { display:none; }  /* Sidebar hidden on mobile */
             .main-area { margin-left:0; }
             .bottom-nav { display:block; }
             .topbar { padding:0 14px; height:54px; }
-            .topbar-left { padding-left: 48px; }
             .topbar-page-title { font-size:13px; }
             .pages-wrap { padding:12px 12px 0; }
             .pages-inner { max-width:100%; }
@@ -341,12 +294,9 @@
             .bnav-item { font-size:8px; padding:2px 4px; }
             .bnav-item svg { width:18px; height:18px; }
             .topbar { height:48px; }
-            .topbar-left { padding-left: 44px; }
         }
         @media (min-width:768px) {
             .bottom-nav { display:none; }
-            .sidebar-toggle { display:none; }
-            .sidebar-overlay { display:none !important; }
         }
     </style>
 </head>
@@ -363,18 +313,10 @@
     <!-- Toast -->
     <div id="toast"></div>
 
-    <!-- Sidebar Toggle (Mobile) -->
-    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle Menu">
-        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-    </button>
-
-    <!-- Sidebar Overlay (Mobile) -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
     <!-- App Shell -->
     <div class="app-shell">
 
-        <!-- Sidebar (desktop) -->
+        <!-- Sidebar (Desktop Only) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <div class="logo-icon">
@@ -444,7 +386,7 @@
             <div class="pages-wrap">
                 <div class="pages-inner">
 
-                    <!-- HOME PAGE (blank welcome) -->
+                    <!-- HOME PAGE -->
                     <div class="page active" id="page-home">
                         <div class="card-blank">
                             <div style="font-size:48px; margin-bottom:16px;">🚪</div>
@@ -453,7 +395,7 @@
                         </div>
                     </div>
 
-                    <!-- FOAM PAGE - IFRAME AUTO FITS -->
+                    <!-- FOAM PAGE -->
                     <div class="page" id="page-foam">
                         <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
                             <iframe src="foam.html" class="page-iframe" id="foamIframe" title="Foam Page"></iframe>
@@ -550,7 +492,7 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation (mobile) -->
+    <!-- Bottom Navigation (Mobile) -->
     <nav class="bottom-nav">
         <div class="bottom-nav-inner">
             <div class="bnav-item active" id="bnav-home" onclick="navigate('home')">
@@ -581,14 +523,6 @@
     </nav>
 
     <script>
-        // ── Sidebar Toggle ──
-        function toggleSidebar() {
-            var sidebar = document.getElementById('sidebar');
-            var overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        }
-
         // ── Toast notification ──
         var toastTimer = null;
         function toast(msg, type) {
@@ -645,10 +579,6 @@
                 if (iframe) {
                     iframe.src = iframe.src;
                 }
-            }
-            
-            if (window.innerWidth <= 767) {
-                toggleSidebar();
             }
             
             setProgress(100);

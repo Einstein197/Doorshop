@@ -316,6 +316,14 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
+        .badge-cloud.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-cloud.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
         .delete-btn {
             background: none;
             border: none;
@@ -458,7 +466,10 @@
         <div style="display:flex; justify-content:space-between; flex-wrap:wrap; align-items:center;">
             <h1><i class="fas fa-cube"></i> Foam Truput</h1>
             <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
-                <span class="badge-cloud" id="cloudStatus"><i class="fas fa-cloud"></i> <span id="kvStatus">Connected</span></span>
+                <span class="badge-cloud" id="cloudStatus">
+                    <i class="fas fa-cloud"></i> 
+                    <span id="kvStatus">Connecting...</span>
+                </span>
                 <span class="badge-info" id="storageStatus"><i class="fas fa-database"></i> <span id="storageCount">0</span> saved</span>
                 <span class="badge-success"><i class="fas fa-file-excel"></i> live</span>
             </div>
@@ -521,6 +532,7 @@
                 <button class="btn btn-warning" id="exportJsonBtn"><i class="fas fa-save"></i> Backup</button>
                 <button class="btn btn-outline" id="importJsonBtn"><i class="fas fa-upload"></i> Restore</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none;" />
+                <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync"></i> Refresh</button>
             </div>
         </div>
 
@@ -567,16 +579,15 @@
 
     <script>
         // ============================================================
-        //  CONFIGURATION - Point to your Cloudflare Worker
+        //  CONFIGURATION - CORRECT WORKER URL!
         // ============================================================
-        const API_URL = 'https://foam-trupt.shadowlegendcg.workers.dev';
+        const API_URL = 'https://foam-truput.shadowlegendcg.workers.dev';
 
         // ============================================================
         //  STATE
         // ============================================================
         let currentData = [];
         let sortConfig = { col: null, asc: true };
-        let nextId = 1;
 
         // ============================================================
         //  DATE HELPERS
@@ -614,6 +625,7 @@
         const addForm = document.getElementById('addForm');
         const cancelAddBtn = document.getElementById('cancelAddBtn');
         const addBtn = document.getElementById('addBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
 
         const deleteModal = document.getElementById('deleteModal');
         const modalCancelBtn = document.getElementById('modalCancelBtn');
@@ -632,7 +644,25 @@
         const newDate = document.getElementById('newDate');
         const newWeight = document.getElementById('newWeight');
 
+        const kvStatusEl = document.getElementById('kvStatus');
+        const cloudStatusEl = document.getElementById('cloudStatus');
+
         newDate.value = getTodayUS();
+
+        // ============================================================
+        //  UPDATE CONNECTION STATUS
+        // ============================================================
+        function setStatus(connected, message) {
+            if (cloudStatusEl && kvStatusEl) {
+                if (connected) {
+                    cloudStatusEl.className = 'badge-cloud connected';
+                    kvStatusEl.textContent = message || 'Connected ✅';
+                } else {
+                    cloudStatusEl.className = 'badge-cloud disconnected';
+                    kvStatusEl.textContent = message || 'Offline ⚠️';
+                }
+            }
+        }
 
         // ============================================================
         //  AUTO-CALC EFFICIENCY
@@ -655,7 +685,7 @@
         async function fetchRecords() {
             try {
                 const response = await fetch(`${API_URL}/api/records`);
-                if (!response.ok) throw new Error('API error');
+                if (!response.ok) throw new Error('API error: ' + response.status);
                 return await response.json();
             } catch (error) {
                 console.error('Error fetching records:', error);
@@ -718,6 +748,8 @@
         //  LOAD DATA FROM CLOUD
         // ============================================================
         async function loadData() {
+            setStatus(false, 'Loading...');
+
             try {
                 const data = await fetchRecords();
                 if (data && Array.isArray(data)) {
@@ -727,23 +759,30 @@
                         return arr;
                     });
                     render();
-                    document.getElementById('kvStatus').textContent = 'Connected ✅';
-                    document.getElementById('kvStatus').style.color = '#28a745';
+                    setStatus(true, 'Connected ✅');
+                    localStorage.setItem('foamTruputData', JSON.stringify(currentData));
+                } else if (data && data.error) {
+                    console.error('API Error:', data.error);
+                    setStatus(false, 'API Error');
+                    loadFromLocalStorage();
                 } else {
                     throw new Error('Invalid data format');
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('kvStatus').textContent = 'Offline ⚠️';
-                document.getElementById('kvStatus').style.color = '#dc3545';
-                // Fallback to localStorage
-                const stored = localStorage.getItem('foamTruputData');
-                if (stored) {
-                    try {
-                        currentData = JSON.parse(stored);
-                        render();
-                    } catch (e) {}
-                }
+                setStatus(false, 'Offline ⚠️');
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('foamTruputData');
+            if (stored) {
+                try {
+                    currentData = JSON.parse(stored);
+                    render();
+                    setStatus(false, 'Offline (cached)');
+                } catch (e) {}
             }
         }
 
@@ -778,6 +817,8 @@
         function render() {
             const filtered = getFilteredData();
 
+            if (!tbody) return;
+
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="empty">No records match your filter.</td></tr>`;
             } else {
@@ -800,22 +841,32 @@
             const effValues = filtered.map(row => parseFloat(row[3]) || 0).filter(v => v > 0);
             const avgEff = effValues.length ? (effValues.reduce((a, b) => a + b, 0) / effValues.length) : 0;
 
-            document.getElementById('totalRed').textContent = totalRed.toLocaleString();
-            document.getElementById('totalBlue').textContent = totalBlue.toLocaleString();
-            document.getElementById('avgEff').textContent = avgEff.toFixed(1) + '%';
-            document.getElementById('rowCount').textContent = filtered.length;
-            document.getElementById('storageCount').textContent = currentData.length;
+            const totalRedEl = document.getElementById('totalRed');
+            const totalBlueEl = document.getElementById('totalBlue');
+            const avgEffEl = document.getElementById('avgEff');
+            const rowCountEl = document.getElementById('rowCount');
+            const storageCountEl = document.getElementById('storageCount');
 
-            headers.forEach((th, idx) => {
-                const icon = th.querySelector('i');
-                if (idx === sortConfig.col) {
-                    icon.className = `fas fa-sort-${sortConfig.asc ? 'up' : 'down'}`;
-                    icon.style.opacity = '1';
-                } else {
-                    icon.className = 'fas fa-sort';
-                    icon.style.opacity = '0.35';
-                }
-            });
+            if (totalRedEl) totalRedEl.textContent = totalRed.toLocaleString();
+            if (totalBlueEl) totalBlueEl.textContent = totalBlue.toLocaleString();
+            if (avgEffEl) avgEffEl.textContent = avgEff.toFixed(1) + '%';
+            if (rowCountEl) rowCountEl.textContent = filtered.length;
+            if (storageCountEl) storageCountEl.textContent = currentData.length;
+
+            if (headers) {
+                headers.forEach((th, idx) => {
+                    const icon = th.querySelector('i');
+                    if (icon) {
+                        if (idx === sortConfig.col) {
+                            icon.className = `fas fa-sort-${sortConfig.asc ? 'up' : 'down'}`;
+                            icon.style.opacity = '1';
+                        } else {
+                            icon.className = 'fas fa-sort';
+                            icon.style.opacity = '0.35';
+                        }
+                    }
+                });
+            }
         }
 
         // ============================================================
@@ -824,18 +875,18 @@
         let deleteTargetId = null;
 
         function showDeleteModal(rowData, id) {
-            modalType.textContent = rowData[0] || '--';
-            modalRed.textContent = rowData[1] || '--';
-            modalBlue.textContent = rowData[2] || '--';
-            modalEff.textContent = rowData[3] || '--';
-            modalDate.textContent = rowData[4] || '--';
-            modalWeight.textContent = rowData[5] || '--';
+            if (modalType) modalType.textContent = rowData[0] || '--';
+            if (modalRed) modalRed.textContent = rowData[1] || '--';
+            if (modalBlue) modalBlue.textContent = rowData[2] || '--';
+            if (modalEff) modalEff.textContent = rowData[3] || '--';
+            if (modalDate) modalDate.textContent = rowData[4] || '--';
+            if (modalWeight) modalWeight.textContent = rowData[5] || '--';
             deleteTargetId = id;
-            deleteModal.classList.add('active');
+            if (deleteModal) deleteModal.classList.add('active');
         }
 
         function hideDeleteModal() {
-            deleteModal.classList.remove('active');
+            if (deleteModal) deleteModal.classList.remove('active');
             deleteTargetId = null;
         }
 
@@ -845,7 +896,6 @@
                 if (result && result.success) {
                     await loadData();
                 } else {
-                    // Fallback: remove from local array
                     const index = currentData.findIndex(row => row._id === deleteTargetId);
                     if (index !== -1) {
                         currentData.splice(index, 1);
@@ -857,33 +907,37 @@
             hideDeleteModal();
         }
 
-        modalCancelBtn.addEventListener('click', hideDeleteModal);
-        modalConfirmBtn.addEventListener('click', confirmDelete);
-        deleteModal.addEventListener('click', (e) => {
-            if (e.target === deleteModal) hideDeleteModal();
-        });
+        if (modalCancelBtn) modalCancelBtn.addEventListener('click', hideDeleteModal);
+        if (modalConfirmBtn) modalConfirmBtn.addEventListener('click', confirmDelete);
+        if (deleteModal) {
+            deleteModal.addEventListener('click', (e) => {
+                if (e.target === deleteModal) hideDeleteModal();
+            });
+        }
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && deleteModal.classList.contains('active')) hideDeleteModal();
+            if (e.key === 'Escape' && deleteModal && deleteModal.classList.contains('active')) hideDeleteModal();
         });
 
         // ============================================================
         //  EVENT DELEGATION FOR DELETE BUTTONS
         // ============================================================
-        tbody.addEventListener('click', function(e) {
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (!deleteBtn) return;
+        if (tbody) {
+            tbody.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.delete-btn');
+                if (!deleteBtn) return;
 
-            const id = deleteBtn.dataset.id;
-            if (!id) return;
+                const id = deleteBtn.dataset.id;
+                if (!id) return;
 
-            const row = currentData.find(r => r._id === id);
-            if (!row) {
-                alert('Record not found.');
-                return;
-            }
+                const row = currentData.find(r => r._id === id);
+                if (!row) {
+                    alert('Record not found.');
+                    return;
+                }
 
-            showDeleteModal(row, id);
-        });
+                showDeleteModal(row, id);
+            });
+        }
 
         // ============================================================
         //  ADD RECORD
@@ -926,15 +980,14 @@
             if (result && result.success) {
                 await loadData();
             } else {
-                // Fallback to localStorage
                 const newRow = [type, red, blue, finalEff ? finalEff + '%' : '', date, weight];
                 newRow._id = 'local_' + Date.now();
                 currentData.push(newRow);
                 localStorage.setItem('foamTruputData', JSON.stringify(currentData));
                 render();
+                setStatus(false, 'Offline (saved locally)');
             }
 
-            // Reset form
             newType.value = 'Doors';
             newRed.value = '0';
             newBlue.value = '0';
@@ -949,210 +1002,239 @@
         // ============================================================
         //  SORT
         // ============================================================
-        headers.forEach((th, idx) => {
-            if (idx === 6) return;
-            th.addEventListener('click', () => {
-                if (sortConfig.col === idx) {
-                    sortConfig.asc = !sortConfig.asc;
-                } else {
-                    sortConfig.col = idx;
-                    sortConfig.asc = true;
-                }
-                render();
+        if (headers) {
+            headers.forEach((th, idx) => {
+                if (idx === 6) return;
+                th.addEventListener('click', () => {
+                    if (sortConfig.col === idx) {
+                        sortConfig.asc = !sortConfig.asc;
+                    } else {
+                        sortConfig.col = idx;
+                        sortConfig.asc = true;
+                    }
+                    render();
+                });
             });
-        });
+        }
 
         // ============================================================
         //  SEARCH
         // ============================================================
-        searchInput.addEventListener('input', render);
+        if (searchInput) {
+            searchInput.addEventListener('input', render);
+        }
 
         // ============================================================
         //  RESET
         // ============================================================
-        resetBtn.addEventListener('click', () => {
-            if (confirm('Reset to default data? All changes will be lost.')) {
-                currentData = [];
-                localStorage.removeItem('foamTruputData');
-                render();
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (confirm('Reset to default data? All changes will be lost.')) {
+                    currentData = [];
+                    localStorage.removeItem('foamTruputData');
+                    render();
+                    loadData();
+                }
+            });
+        }
+
+        // ============================================================
+        //  REFRESH
+        // ============================================================
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
                 loadData();
-            }
-        });
+            });
+        }
 
         // ============================================================
         //  TOGGLE FORM
         // ============================================================
-        toggleFormBtn.addEventListener('click', () => {
-            addForm.classList.toggle('open');
-            if (addForm.classList.contains('open')) {
-                toggleFormBtn.innerHTML = '<i class="fas fa-times-circle"></i> Close Form';
-                newDate.value = getTodayUS();
-                calcEfficiency();
-            } else {
-                toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
-            }
-        });
-
-        cancelAddBtn.addEventListener('click', () => {
-            addForm.classList.remove('open');
-            toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
-        });
-
-        addBtn.addEventListener('click', addRecord);
-
-        document.querySelectorAll('#addForm input, #addForm select').forEach(field => {
-            field.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addRecord();
+        if (toggleFormBtn) {
+            toggleFormBtn.addEventListener('click', () => {
+                addForm.classList.toggle('open');
+                if (addForm.classList.contains('open')) {
+                    toggleFormBtn.innerHTML = '<i class="fas fa-times-circle"></i> Close Form';
+                    newDate.value = getTodayUS();
+                    calcEfficiency();
+                } else {
+                    toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
                 }
             });
-        });
+        }
+
+        if (cancelAddBtn) {
+            cancelAddBtn.addEventListener('click', () => {
+                addForm.classList.remove('open');
+                toggleFormBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Record';
+            });
+        }
+
+        if (addBtn) {
+            addBtn.addEventListener('click', addRecord);
+        }
+
+        if (document.querySelectorAll) {
+            document.querySelectorAll('#addForm input, #addForm select').forEach(field => {
+                field.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addRecord();
+                    }
+                });
+            });
+        }
 
         // ============================================================
         //  EXPORT CSV
         // ============================================================
-        exportBtn.addEventListener('click', () => {
-            window.open(`${API_URL}/api/export/csv`, '_blank');
-        });
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                window.open(`${API_URL}/api/export/csv`, '_blank');
+            });
+        }
 
         // ============================================================
         //  EXPORT JSON (Backup)
         // ============================================================
-        exportJsonBtn.addEventListener('click', () => {
-            const dataToExport = currentData.map(row => ({
-                type: row[0],
-                red: row[1],
-                blue: row[2],
-                efficiency: row[3],
-                date: row[4],
-                weight: row[5]
-            }));
-            const json = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `foam_truput_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        });
+        if (exportJsonBtn) {
+            exportJsonBtn.addEventListener('click', () => {
+                const dataToExport = currentData.map(row => ({
+                    type: row[0],
+                    red: row[1],
+                    blue: row[2],
+                    efficiency: row[3],
+                    date: row[4],
+                    weight: row[5]
+                }));
+                const json = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `foam_truput_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
 
         // ============================================================
         //  IMPORT JSON (Restore)
         // ============================================================
-        importJsonBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
+        if (importJsonBtn) {
+            importJsonBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (Array.isArray(data) && data.length > 0) {
-                        if (confirm(`Load ${data.length} records from backup?`)) {
-                            // Import each record to Cloud
-                            for (const record of data) {
-                                await addRecordToCloud({
-                                    type: record.type || 'Doors',
-                                    red: parseInt(record.red) || 0,
-                                    blue: parseInt(record.blue) || 0,
-                                    efficiency: record.efficiency || '',
-                                    date: record.date || getTodayUS(),
-                                    weight: parseFloat(record.weight) || 0
-                                });
+        if (fileInput) {
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (Array.isArray(data) && data.length > 0) {
+                            if (confirm(`Load ${data.length} records from backup?`)) {
+                                for (const record of data) {
+                                    await addRecordToCloud({
+                                        type: record.type || 'Doors',
+                                        red: parseInt(record.red) || 0,
+                                        blue: parseInt(record.blue) || 0,
+                                        efficiency: record.efficiency || '',
+                                        date: record.date || getTodayUS(),
+                                        weight: parseFloat(record.weight) || 0
+                                    });
+                                }
+                                await loadData();
                             }
-                            await loadData();
+                        } else {
+                            alert('Invalid backup file.');
                         }
-                    } else {
-                        alert('Invalid backup file.');
+                    } catch (e) {
+                        alert('Error reading file. Make sure it\'s a valid JSON backup.');
                     }
-                } catch (e) {
-                    alert('Error reading file. Make sure it\'s a valid JSON backup.');
-                }
-            };
-            reader.readAsText(file);
-            fileInput.value = '';
-        });
+                };
+                reader.readAsText(file);
+                fileInput.value = '';
+            });
+        }
 
         // ============================================================
         //  EDIT CELL (double-click)
         // ============================================================
-        tbody.addEventListener('dblclick', async (e) => {
-            const td = e.target.closest('td');
-            if (!td) return;
-            const tr = td.closest('tr');
-            if (!tr) return;
-            const colIndex = td.cellIndex;
-            if (colIndex === 6) return;
+        if (tbody) {
+            tbody.addEventListener('dblclick', async (e) => {
+                const td = e.target.closest('td');
+                if (!td) return;
+                const tr = td.closest('tr');
+                if (!tr) return;
+                const colIndex = td.cellIndex;
+                if (colIndex === 6) return;
 
-            const id = tr.dataset.id;
-            if (!id) return;
+                const id = tr.dataset.id;
+                if (!id) return;
 
-            const dataIndex = currentData.findIndex(row => row._id === id);
-            if (dataIndex === -1) return;
+                const dataIndex = currentData.findIndex(row => row._id === id);
+                if (dataIndex === -1) return;
 
-            const oldValue = currentData[dataIndex][colIndex];
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = oldValue;
-            input.style.width = '100%';
-            input.style.border = '2px solid #1a6df5';
-            input.style.borderRadius = '6px';
-            input.style.padding = '4px 6px';
-            input.style.fontSize = '0.9rem';
-            td.innerHTML = '';
-            td.appendChild(input);
-            input.focus();
-            input.select();
+                const oldValue = currentData[dataIndex][colIndex];
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = oldValue;
+                input.style.width = '100%';
+                input.style.border = '2px solid #1a6df5';
+                input.style.borderRadius = '6px';
+                input.style.padding = '4px 6px';
+                input.style.fontSize = '0.9rem';
+                td.innerHTML = '';
+                td.appendChild(input);
+                input.focus();
+                input.select();
 
-            const save = async () => {
-                let newValue = input.value.trim();
-                if (colIndex === 4 && newValue && !isValidDateUS(newValue)) {
-                    alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
-                    input.value = oldValue;
-                    input.focus();
-                    return;
-                }
-                
-                // Update in Cloud
-                const record = {
-                    type: currentData[dataIndex][0],
-                    red: parseInt(currentData[dataIndex][1]) || 0,
-                    blue: parseInt(currentData[dataIndex][2]) || 0,
-                    efficiency: currentData[dataIndex][3] || '',
-                    date: currentData[dataIndex][4] || getTodayUS(),
-                    weight: parseFloat(currentData[dataIndex][5]) || 0
+                const save = async () => {
+                    let newValue = input.value.trim();
+                    if (colIndex === 4 && newValue && !isValidDateUS(newValue)) {
+                        alert('Please enter date in MM/DD/YYYY format (e.g., 6/22/2026)');
+                        input.value = oldValue;
+                        input.focus();
+                        return;
+                    }
+                    
+                    const record = {
+                        type: currentData[dataIndex][0],
+                        red: parseInt(currentData[dataIndex][1]) || 0,
+                        blue: parseInt(currentData[dataIndex][2]) || 0,
+                        efficiency: currentData[dataIndex][3] || '',
+                        date: currentData[dataIndex][4] || getTodayUS(),
+                        weight: parseFloat(currentData[dataIndex][5]) || 0
+                    };
+                    
+                    const fieldMap = ['type', 'red', 'blue', 'efficiency', 'date', 'weight'];
+                    if (fieldMap[colIndex] === 'red' || fieldMap[colIndex] === 'blue' || fieldMap[colIndex] === 'weight') {
+                        record[fieldMap[colIndex]] = parseFloat(newValue) || 0;
+                    } else {
+                        record[fieldMap[colIndex]] = newValue;
+                    }
+                    
+                    const result = await updateRecordInCloud(id, record);
+                    if (result && result.success) {
+                        await loadData();
+                    } else {
+                        currentData[dataIndex][colIndex] = newValue || oldValue;
+                        localStorage.setItem('foamTruputData', JSON.stringify(currentData));
+                        render();
+                    }
                 };
                 
-                // Update the specific field
-                const fieldMap = ['type', 'red', 'blue', 'efficiency', 'date', 'weight'];
-                if (fieldMap[colIndex] === 'red' || fieldMap[colIndex] === 'blue' || fieldMap[colIndex] === 'weight') {
-                    record[fieldMap[colIndex]] = parseFloat(newValue) || 0;
-                } else {
-                    record[fieldMap[colIndex]] = newValue;
-                }
-                
-                const result = await updateRecordInCloud(id, record);
-                if (result && result.success) {
-                    await loadData();
-                } else {
-                    // Fallback
-                    currentData[dataIndex][colIndex] = newValue || oldValue;
-                    localStorage.setItem('foamTruputData', JSON.stringify(currentData));
-                    render();
-                }
-            };
-            
-            input.addEventListener('blur', save);
-            input.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-                if (ev.key === 'Escape') { input.value = oldValue; input.blur(); }
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+                    if (ev.key === 'Escape') { input.value = oldValue; input.blur(); }
+                });
             });
-        });
+        }
 
         // ============================================================
         //  GET LAST DOOR WEIGHT (for foam calculator)

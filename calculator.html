@@ -4,237 +4,525 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Fraction Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         html, body {
             height: 100%;
             margin: 0;
         }
         body {
-            text-align: center;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: transparent;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             padding: 20px;
-            font-family: Times, sans-serif;
-            background-color: white;
         }
-        header {
-            background-color: #4CAF50;
+
+        :root {
+            --primary: #4f6ef7;
+            --primary-dark: #3a56e4;
+            --secondary: #2dd4bf;
+            --green: #10b981;
+            --red: #f43f5e;
+            --bg: radial-gradient(ellipse at top left, #121c38, #050811);
+            --text: #eef2ff;
+            --text-2: #94a3b8;
+            --text-3: #475569;
+            --glass: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.09);
+            --radius: 20px;
+            --radius-sm: 12px;
+        }
+
+        .calculator-wrapper {
             width: 100%;
-            height: 100px;
-            color: black;
-            padding: 20px;
-            text-align: center;
+            max-width: 420px;
+            background: var(--glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px 24px 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        nav {
-            text-align: center;
-            margin: 20px;
-        }
-        nav a {
-            margin: 0 15px;
-            color: black;
-            text-decoration: none;
-        }
-        .parent-container {
+
+        .calc-header {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
-        .calculator-container {
+        .calc-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .calc-header .badge {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-2);
+            background: var(--glass);
+            padding: 4px 12px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .display-wrap {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 4px 16px;
+            margin-bottom: 16px;
+            min-height: 70px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            width: 300px;
-            height: auto;
-            background-color: #FFA500;
-            padding: 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            justify-content: flex-end;
         }
-        .calculator {
+        .display-wrap .display {
+            font-family: 'Inter', monospace;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            text-align: right;
+            padding: 12px 0;
+            letter-spacing: 0.5px;
+        }
+        .display-wrap .display::placeholder {
+            color: var(--text-3);
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .calc-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            max-width: 300px;
-            margin: 20px auto;
         }
-        .display {
-            grid-column: span 4;
-            font-size: 30px;
-            padding: 10px;
-            text-align: right;
+
+        .btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            padding: 18px 8px;
             border: none;
-            margin-bottom: 10px;
-            background-color: #555;
-            color: white;
-        }
-        button {
-            font-size: 18px;
-            padding: 20px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+            user-select: none;
+            text-align: center;
+        }
+        .btn:active { transform: scale(0.94); }
+
+        .btn-number {
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+        .btn-number:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: var(--primary);
+        }
+
+        .btn-operator {
+            background: rgba(79,110,247,0.2);
+            color: var(--primary);
+            border: 1px solid rgba(79,110,247,0.2);
+        }
+        .btn-operator:hover {
+            background: rgba(79,110,247,0.3);
+            border-color: var(--primary);
+        }
+
+        .btn-equals {
+            background: var(--primary);
             color: white;
-            border: none;
-            border-radius: 50px;
-            touch-action: manipulation; /* Prevent double-tap zoom */
+            border: 1px solid var(--primary);
+            grid-column: span 4;
         }
-        button.number {
-            background-color: #4CAF50; /* Green */
+        .btn-equals:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(79,110,247,0.4);
         }
-        button.operator {
-            background-color: #FF5733; /* Orange */
+
+        .btn-clear {
+            background: rgba(244,63,94,0.15);
+            color: var(--red);
+            border: 1px solid rgba(244,63,94,0.15);
         }
-        button.space {
-            background-color: #00BFFF; /* Light Blue */
+        .btn-clear:hover {
+            background: rgba(244,63,94,0.25);
+            border-color: var(--red);
+        }
+
+        .btn-space {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-2);
+            border: 1px solid var(--glass-border);
             grid-column: span 2;
         }
-        button.c {
-            background-color: #00BFFF; /* Light Blue */
+        .btn-space:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--text-3);
         }
-        button.Period {
-            background-color: #20B2AA; /* Teal */
+
+        .btn-zero { grid-column: span 2; }
+
+        .btn-period {
+            background: rgba(16,185,129,0.15);
+            color: var(--green);
+            border: 1px solid rgba(16,185,129,0.15);
         }
-        button.zero {
-            background-color: #4CAF50; /* Green */
-            grid-column: span 2;
+        .btn-period:hover {
+            background: rgba(16,185,129,0.25);
+            border-color: var(--green);
+        }
+
+        .btn-delete {
+            background: rgba(244,63,94,0.1);
+            color: var(--red);
+            border: 1px solid rgba(244,63,94,0.1);
+        }
+        .btn-delete:hover {
+            background: rgba(244,63,94,0.2);
+            border-color: var(--red);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20,26,46,0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 300;
+            color: var(--text-2);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: translateX(-50%) translateY(10px);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .calculator-wrapper { padding: 16px 14px 20px; }
+            .btn { font-size: 18px; padding: 16px 6px; }
+            .display-wrap .display { font-size: 24px; }
+            .calc-grid { gap: 8px; }
+        }
+        @media (max-width: 380px) {
+            .btn { font-size: 15px; padding: 14px 4px; }
+            .display-wrap .display { font-size: 20px; }
+            .calc-grid { gap: 6px; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Door Shop</h1>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="foam.html">Foam</a>
-            <a href="gasket.html">Gasket</a>
-            <a href="calculator.html">Calculator</a>
-	    <a href="https://172.16.20.104:5000">Door Upload</a>
-        </nav>
-    </header>
-    <div class="parent-container">
-        <section class="calculator-container">
-            <div class="calculator">
-                <input type="text" id="display" class="display" readonly>
 
-                <button class="number" onclick="appendText('7')">7</button>
-                <button class="number" onclick="appendText('8')">8</button>
-                <button class="number" onclick="appendText('9')">9</button>
-                <button class="operator" onclick="appendText('/')">/</button>
+<div class="calculator-wrapper">
 
-                <button class="number" onclick="appendText('4')">4</button>
-                <button class="number" onclick="appendText('5')">5</button>
-                <button class="number" onclick="appendText('6')">6</button>
-                <button class="operator" onclick="appendText('*')">*</button>
-
-                <button class="number" onclick="appendText('1')">1</button>
-                <button class="number" onclick="appendText('2')">2</button>
-                <button class="number" onclick="appendText('3')">3</button>
-                <button class="operator" onclick="appendText('-')">-</button>
-
-                <button class="zero" onclick="appendText('0')">0</button>
-                <button class="Period" onclick="appendText('.')">.</button>
-                <button class="operator" onclick="appendText('+')">+</button>
-
-                <button class="space" onclick="appendText(' ')">Space</button>
-                <button class="c" onclick="clearDisplay()">C</button>
-                <button class="operator" onclick="evaluateExpression()">=</button>
-            </div>
-        </section>
+    <div class="calc-header">
+        <h1>🧮 Fraction Calc</h1>
+        <span class="badge">/16 precision</span>
     </div>
-    <script>
-        function appendText(text) {
-            document.getElementById("display").value += text;
+
+    <div class="display-wrap">
+        <input type="text" id="display" class="display" placeholder="0" readonly>
+    </div>
+
+    <div class="calc-grid">
+        <button class="btn btn-number" onclick="appendText('7')">7</button>
+        <button class="btn btn-number" onclick="appendText('8')">8</button>
+        <button class="btn btn-number" onclick="appendText('9')">9</button>
+        <button class="btn btn-operator" onclick="appendText('/')">÷</button>
+
+        <button class="btn btn-number" onclick="appendText('4')">4</button>
+        <button class="btn btn-number" onclick="appendText('5')">5</button>
+        <button class="btn btn-number" onclick="appendText('6')">6</button>
+        <button class="btn btn-operator" onclick="appendText('*')">×</button>
+
+        <button class="btn btn-number" onclick="appendText('1')">1</button>
+        <button class="btn btn-number" onclick="appendText('2')">2</button>
+        <button class="btn btn-number" onclick="appendText('3')">3</button>
+        <button class="btn btn-operator" onclick="appendText('-')">−</button>
+
+        <button class="btn btn-number btn-zero" onclick="appendText('0')">0</button>
+        <button class="btn btn-period" onclick="appendText('.')">.</button>
+        <button class="btn btn-operator" onclick="appendText('+')">+</button>
+        <button class="btn btn-clear" onclick="clearDisplay()">C</button>
+        
+
+        <button class="btn btn-space" onclick="appendText(' ')">Space</button>
+        <button class="btn btn-delete" onclick="deleteLast()">⌫</button>
+        <button class="btn btn-equals" onclick="evaluateExpression()">=</button>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // ── Toast ──
+    let toastTimer = null;
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.className = 'toast show';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { el.className = 'toast'; }, 2000);
+    }
+
+    // ── Display Functions ──
+    function appendText(text) {
+        const display = document.getElementById('display');
+        display.value += text;
+    }
+
+    function clearDisplay() {
+        document.getElementById('display').value = '';
+    }
+
+    function deleteLast() {
+        const display = document.getElementById('display');
+        display.value = display.value.slice(0, -1);
+    }
+
+    // ── Fraction Class ──
+    class Fraction {
+        constructor(numerator, denominator = 1) {
+            if (denominator === 0) throw new Error('Division by zero');
+            this.numerator = numerator;
+            this.denominator = denominator;
+            this.simplify();
         }
-        function clearDisplay() {
-            document.getElementById("display").value = "";
-        }
-        function evaluateExpression() {
-            try {
-                let expression = document.getElementById("display").value;
-                expression = expression.replace(/(\d+)\s+(\d+)\/(\d+)/g, function(match, whole, numerator, denominator) {
-                    let improperFractionNumerator = (parseInt(whole) * parseInt(denominator)) + parseInt(numerator);
-                    return `${improperFractionNumerator}/${denominator}`;
-                });
-                const result = evaluateFractionExpression(expression);
-                const roundedResult = roundToNearestSixteenth(result);
-                document.getElementById("display").value = roundedResult;
-            } catch (error) {
-                document.getElementById("display").value = "Error";
+
+        simplify() {
+            const gcd = this.gcd(Math.abs(this.numerator), Math.abs(this.denominator));
+            this.numerator /= gcd;
+            this.denominator /= gcd;
+            if (this.denominator < 0) {
+                this.numerator *= -1;
+                this.denominator *= -1;
             }
+            return this;
         }
-        function evaluateFractionExpression(expression) {
-            const tokens = expression.split(/([+\-*/])/);
-            let result = parseFraction(tokens[0]);
+
+        gcd(a, b) {
+            if (b === 0) return a;
+            return this.gcd(b, a % b);
+        }
+
+        add(other) {
+            return new Fraction(
+                this.numerator * other.denominator + other.numerator * this.denominator,
+                this.denominator * other.denominator
+            );
+        }
+
+        subtract(other) {
+            return new Fraction(
+                this.numerator * other.denominator - other.numerator * this.denominator,
+                this.denominator * other.denominator
+            );
+        }
+
+        multiply(other) {
+            return new Fraction(
+                this.numerator * other.numerator,
+                this.denominator * other.denominator
+            );
+        }
+
+        divide(other) {
+            if (other.numerator === 0) throw new Error('Division by zero');
+            return new Fraction(
+                this.numerator * other.denominator,
+                this.denominator * other.numerator
+            );
+        }
+
+        toMixedString() {
+            if (this.numerator === 0) return '0';
+            if (this.denominator === 1) return this.numerator.toString();
+            
+            const whole = Math.floor(this.numerator / this.denominator);
+            const remainder = this.numerator % this.denominator;
+            
+            // Round to nearest 16th
+            const decimal = this.numerator / this.denominator;
+            const rounded = Math.round(decimal * 16) / 16;
+            const roundedNum = Math.round(rounded * this.denominator);
+            
+            if (roundedNum === 0) return '0';
+            
+            const newWhole = Math.floor(roundedNum / this.denominator);
+            const newRemainder = roundedNum % this.denominator;
+            
+            if (newRemainder === 0) return newWhole.toString();
+            if (newWhole === 0) return `${newRemainder}/${this.denominator}`;
+            return `${newWhole} ${newRemainder}/${this.denominator}`;
+        }
+    }
+
+    // ── Parse fraction string ──
+    function parseFractionString(str) {
+        str = str.trim();
+        if (!str) return new Fraction(0, 1);
+
+        // Handle mixed fractions: "2 1/2"
+        const mixedMatch = str.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+        if (mixedMatch) {
+            const whole = parseInt(mixedMatch[1]);
+            const num = parseInt(mixedMatch[2]);
+            const den = parseInt(mixedMatch[3]);
+            return new Fraction(whole * den + num, den);
+        }
+
+        // Handle simple fractions: "3/4"
+        const fracMatch = str.match(/^(\d+)\/(\d+)$/);
+        if (fracMatch) {
+            return new Fraction(parseInt(fracMatch[1]), parseInt(fracMatch[2]));
+        }
+
+        // Handle decimals or whole numbers
+        const num = parseFloat(str);
+        if (!isNaN(num)) {
+            if (num % 1 === 0) {
+                return new Fraction(num, 1);
+            }
+            const precision = 16;
+            const rounded = Math.round(num * precision) / precision;
+            const numerator = Math.round(rounded * precision);
+            return new Fraction(numerator, precision);
+        }
+
+        return new Fraction(0, 1);
+    }
+
+    // ── Evaluate expression ──
+    function evaluateExpression() {
+        const display = document.getElementById('display');
+        const expression = display.value.trim();
+
+        if (!expression) {
+            showToast('⚠️ Enter an expression');
+            return;
+        }
+
+        try {
+            // Tokenize the expression
+            const tokens = expression.match(/(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.?\d*|[+\-*/])/g);
+            
+            if (!tokens || tokens.length === 0) {
+                showToast('⚠️ Invalid expression');
+                return;
+            }
+
+            let result = parseFractionString(tokens[0]);
+
             for (let i = 1; i < tokens.length; i += 2) {
                 const operator = tokens[i];
-                const nextFraction = parseFraction(tokens[i + 1]);
+                const nextToken = tokens[i + 1];
+                
+                if (!nextToken) {
+                    showToast('⚠️ Incomplete expression');
+                    return;
+                }
+
+                const nextFraction = parseFractionString(nextToken);
+                
                 switch (operator) {
-                    case '+': result = addFractions(result, nextFraction); break;
-                    case '-': result = subtractFractions(result, nextFraction); break;
-                    case '*': result = multiplyFractions(result, nextFraction); break;
-                    case '/': result = divideFractions(result, nextFraction); break;
+                    case '+': result = result.add(nextFraction); break;
+                    case '-': result = result.subtract(nextFraction); break;
+                    case '*': result = result.multiply(nextFraction); break;
+                    case '/': result = result.divide(nextFraction); break;
+                    default:
+                        showToast('⚠️ Unknown operator: ' + operator);
+                        return;
                 }
             }
-            return result;
+
+            const displayResult = result.toMixedString();
+            display.value = displayResult;
+            showToast('✅ ' + displayResult);
+
+        } catch (error) {
+            display.value = 'Error';
+            showToast('❌ ' + error.message);
+            console.error(error);
         }
-        function parseFraction(fractionStr) {
-            if (fractionStr.includes('/')) {
-                const [numerator, denominator] = fractionStr.split('/').map(Number);
-                return { numerator, denominator };
-            } else {
-                return { numerator: parseInt(fractionStr), denominator: 1 };
-            }
+    }
+
+    // ── Keyboard Support ──
+    document.addEventListener('keydown', function(e) {
+        const key = e.key;
+
+        if (key >= '0' && key <= '9') {
+            appendText(key);
+            e.preventDefault();
+        } else if (key === '.') {
+            appendText('.');
+            e.preventDefault();
+        } else if (key === '+') {
+            appendText('+');
+            e.preventDefault();
+        } else if (key === '-') {
+            appendText('-');
+            e.preventDefault();
+        } else if (key === '*') {
+            appendText('*');
+            e.preventDefault();
+        } else if (key === '/') {
+            appendText('/');
+            e.preventDefault();
+        } else if (key === ' ') {
+            appendText(' ');
+            e.preventDefault();
+        } else if (key === 'Enter') {
+            evaluateExpression();
+            e.preventDefault();
+        } else if (key === 'Escape' || key === 'c' || key === 'C') {
+            clearDisplay();
+            e.preventDefault();
+        } else if (key === 'Backspace') {
+            deleteLast();
+            e.preventDefault();
         }
-        function addFractions(f1, f2) {
-            const numerator = f1.numerator * f2.denominator + f2.numerator * f1.denominator;
-            const denominator = f1.denominator * f2.denominator;
-            return simplifyFraction({ numerator, denominator });
+    });
+
+    // ── Prevent zoom on double tap ──
+    document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        if (now - (document.lastTouch || 0) < 300) {
+            e.preventDefault();
         }
-        function subtractFractions(f1, f2) {
-            const numerator = f1.numerator * f2.denominator - f2.numerator * f1.denominator;
-            const denominator = f1.denominator * f2.denominator;
-            return simplifyFraction({ numerator, denominator });
-        }
-        function multiplyFractions(f1, f2) {
-            const numerator = f1.numerator * f2.numerator;
-            const denominator = f1.denominator * f2.denominator;
-            return simplifyFraction({ numerator, denominator });
-        }
-        function divideFractions(f1, f2) {
-            const numerator = f1.numerator * f2.denominator;
-            const denominator = f1.denominator * f2.numerator;
-            if (denominator === 0) throw new Error("Division by zero");
-            return simplifyFraction({ numerator, denominator });
-        }
-        function simplifyFraction(fraction) {
-            const gcd = getGCD(fraction.numerator, fraction.denominator);
-            return {
-                numerator: fraction.numerator / gcd,
-                denominator: fraction.denominator / gcd
-            };
-        }
-        function roundToNearestSixteenth(fraction) {
-            const denominator = 16;
-            const decimal = fraction.numerator / fraction.denominator;
-            const roundedDecimal = Math.round(decimal * denominator) / denominator;
-            return toFraction(roundedDecimal);
-        }
-        function toFraction(decimal) {
-            const wholeNumber = Math.floor(decimal);
-            const fraction = decimal - wholeNumber;
-            if (fraction !== 0) {
-                const denominator = 16;
-                let numerator = Math.round(fraction * denominator);
-                if (numerator === denominator) {
-                    numerator = 0;
-                    wholeNumber += 1;
-                }
-                if (numerator !== 0) {
-                    const gcd = getGCD(numerator, denominator);
-                    return `${wholeNumber} ${numerator / gcd}/${denominator / gcd}`;
-                }
-            }
-            return `${wholeNumber}`;
-        }
-        function getGCD(a, b) {
-            return b === 0 ? a : getGCD(b, a % b);
-        }
-    </script>
+        document.lastTouch = now;
+    }, { passive: false });
+</script>
+
 </body>
 </html>

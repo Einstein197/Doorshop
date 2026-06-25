@@ -2,274 +2,497 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gasket/Heat Wire</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gasket · Heat Wire</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* ── Reset ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             text-align: center;
             padding: 20px;
-            font-family: Times, sans-serif;
-            background-color: #C5c5c5;
-            background-size: cover;
-        }
-        header {
-            background-color: #4CAF50;
-            color: black;
-            padding: 2px;
-            text-align: center;
+            font-family: 'Inter', Times, sans-serif;
+            background: transparent;
+            color: var(--text, #eef2ff);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0;
         }
 
+        /* ── Inherit Moon Wallet colors ── */
+        :root {
+            --primary: #4f6ef7;
+            --primary-dark: #3a56e4;
+            --secondary: #2dd4bf;
+            --green: #10b981;
+            --red: #f43f5e;
+            --bg: radial-gradient(ellipse at top left, #121c38, #050811);
+            --text: #eef2ff;
+            --text-2: #94a3b8;
+            --text-3: #475569;
+            --glass: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.09);
+            --radius: 20px;
+            --radius-sm: 12px;
+        }
+
+        .calculator-wrapper {
+            width: 100%;
+            max-width: 800px;
+            background: var(--glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px 28px 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* ── Title ── */
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-2);
+            text-align: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 16px;
+        }
+
+        /* ── Form Elements ── */
         label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
+            margin-right: 6px;
+            letter-spacing: 0.04em;
             display: inline-block;
-            margin-bottom: 10px;
             width: 80px;
+            text-align: right;
         }
-        nav {
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], select {
+            font-family: 'Inter', Times, sans-serif;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            outline: none;
+            margin: 4px;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.15);
+            background: rgba(0,0,0,0.35);
+        }
+        input[type="text"]::placeholder {
+            color: var(--text-3);
+            font-weight: 400;
+            font-size: 14px;
+        }
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            min-width: 60px;
+        }
+        select option {
+            background: #0d1225;
+            color: var(--text);
+        }
+
+        .input-sm {
+            width: 120px;
+        }
+
+        /* ── Results Cards ── */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .result-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            transition: all 0.2s;
+        }
+        .result-card:hover {
+            border-color: rgba(79,110,247,0.2);
+        }
+        .result-card .label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-3);
+            margin-bottom: 4px;
+        }
+        .result-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .result-card .sub {
+            font-size: 11px;
+            color: var(--text-2);
+            margin-top: 2px;
+        }
+        .result-card.magnet .value {
+            color: var(--secondary);
+        }
+        .result-card.heatwire .value {
+            color: var(--primary);
+        }
+
+        .section-divider {
+            grid-column: 1 / -1;
             text-align: center;
-            margin: 20px;
-        }
-        nav a {
-            margin: 0 15px;
-            color: #black;
-            text-decoration: none;
-        }
-
-        input {
-            width: 150px;
-            padding: 8px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-2);
+            padding: 8px 0 4px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 4px;
         }
 
-        .perimeter-container {
+        .result-card.hidden {
             display: none;
         }
 
-        #result {
-            font-size: 18px;
-            margin-top: 20px;
-        }
-        /* Custom Keyboard */
+        /* ── Custom Keyboard ── */
         .keyboard {
             display: none;
             grid-template-columns: repeat(3, 60px);
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            margin-top: 16px;
             justify-content: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
         }
 
         .key {
             padding: 10px;
             font-size: 18px;
+            font-weight: 600;
             text-align: center;
-            background-color: #ccc;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
             cursor: pointer;
             user-select: none;
+            color: var(--text-2);
+            transition: all 0.15s;
+        }
+        .key:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--text);
+            border-color: var(--primary);
+        }
+        .key:active {
+            transform: scale(0.95);
         }
         .space {
             padding: 10px;
             font-size: 18px;
             text-align: center;
-            background-color: #ccc;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
             cursor: pointer;
             user-select: none;
-            grid-column: span 3
+            grid-column: span 3;
+            color: var(--text-2);
+            transition: all 0.15s;
+        }
+        .space:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--text);
+            border-color: var(--primary);
         }
 
-        input[type="text"] {
-            font-size: 16px; /* Prevents mobile zoom */
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .calculator-wrapper { padding: 16px 14px 20px; }
+            .results-grid { grid-template-columns: 1fr; }
+            .input-group { flex-direction: column; align-items: stretch; }
+            label { width: 100%; text-align: center; }
+            input[type="text"] { width: 100%; }
+            .input-sm { width: 100%; }
+            select { width: 100%; }
+            .keyboard { grid-template-columns: repeat(3, 50px); }
+            .key, .space { font-size: 16px; padding: 8px; }
+        }
+        @media (max-width: 400px) {
+            .calculator-wrapper { padding: 12px 10px 16px; }
+            .result-card .value { font-size: 18px; }
+            .keyboard { grid-template-columns: repeat(3, 45px); }
+            .key, .space { font-size: 14px; padding: 6px; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Gasket</h1>
-        <nav>
-        <a href="index.html">Home</a>
-        <a href="foam.html">Foam</a>
-        <a href="gasket.html">Gasket</a>
-        <a href="calculator.html">Calculator</a>
-	<a href="https://172.16.20.104:5000">Door Upload</a>
-    </nav>
-    </header>
-    <div>
-        &nbsp;
+
+<div class="calculator-wrapper">
+
+    <!-- Title -->
+    <div class="page-title">📐 Gasket / Heat Wire</div>
+    <div class="page-subtitle">Calculate perimeter and heat wire length for door gaskets</div>
+
+    <!-- Inputs -->
+    <div class="input-group">
+        <label for="HeightInput">Height:</label>
+        <input type="text" id="HeightInput" class="input-sm" inputmode="none" placeholder="e.g. 2 1/2">
     </div>
 
-
-
-
-    <div>
-    <label for="HeightInput" style="display: inline-block; width: 130px;">Height:</label>
-    <input type="text" id="HeightInput" inputmode="none" placeholder="Height" style="width: 90px; height:10px; border-radius: 10px;">
+    <div class="input-group">
+        <label for="widthInput">Width:</label>
+        <input type="text" id="widthInput" class="input-sm" inputmode="none" placeholder="e.g. 1 1/2">
     </div>
 
-    <div>
-        <label for="widthInput" style="display: inline-block; width: 130px;">Width:</label>
-        <input type="text" id="widthInput" inputmode="none" placeholder="Width" style="width: 90px; height:10px; border-radius: 10px;">
-    <!-- Custom Keyboard -->
-            <div class="keyboard" id="customKeyboard">
-                <div class="key" onclick="addToInput('1', event)">1</div>
-                <div class="key" onclick="addToInput('2', event)">2</div>
-                <div class="key" onclick="addToInput('3', event)">3</div>
-                <div class="key" onclick="addToInput('4', event)">4</div>
-                <div class="key" onclick="addToInput('5', event)">5</div>
-                <div class="key" onclick="addToInput('6', event)">6</div>
-                <div class="key" onclick="addToInput('7', event)">7</div>
-                <div class="key" onclick="addToInput('8', event)">8</div>
-                <div class="key" onclick="addToInput('9', event)">9</div>
-                <div class="key" onclick="addToInput('/', event)">/</div>
-                <div class="key" onclick="addToInput('0', event)">0</div>
-                <div class="key" onclick="deleteLast(), event">Del</div>
-                <div class="space" onclick="addToInput(' ', event)">Space</div>
-            </div>
-            <div>
-                &nbsp;
-            </div>
-
-    <div>
-        &nbsp;
-    </div>
-
-    <div>
-        <label for="numberOfSides" style="display: inline-block; width: 130px;">Number of Sides:</label>
-        <select id="numberOfSides" style="width: 40px; border-radius: 10px;">
+    <div class="input-group">
+        <label for="numberOfSides">Sides:</label>
+        <select id="numberOfSides">
             <option value="3" selected>3</option>
             <option value="4">4</option>
         </select>
     </div>
 
-
-
-    <div id="perimeter3SidedContainer" class="perimeter-container">
-        <h1>Magnet</h1>
-        <p id="result3Sided"><b>3 Sided:</b> <span id="perimeter3Sided" style="color: green;">0</span></p>
-        <h2>Heat Wire</h2>
-        <p id="heatWireResult3Sided">
-            <b>3 Sided :</b> <span id="heatWirePerimeter3Sided" style="color: green;">0</span>
-        </p>
+    <!-- Custom Keyboard -->
+    <div class="keyboard" id="customKeyboard">
+        <div class="key" onclick="addToInput('1', event)">1</div>
+        <div class="key" onclick="addToInput('2', event)">2</div>
+        <div class="key" onclick="addToInput('3', event)">3</div>
+        <div class="key" onclick="addToInput('4', event)">4</div>
+        <div class="key" onclick="addToInput('5', event)">5</div>
+        <div class="key" onclick="addToInput('6', event)">6</div>
+        <div class="key" onclick="addToInput('7', event)">7</div>
+        <div class="key" onclick="addToInput('8', event)">8</div>
+        <div class="key" onclick="addToInput('9', event)">9</div>
+        <div class="key" onclick="addToInput('/', event)">/</div>
+        <div class="key" onclick="addToInput('0', event)">0</div>
+        <div class="key" onclick="deleteLast()" style="color:var(--red);">Del</div>
+        <div class="space" onclick="addToInput(' ', event)">Space</div>
     </div>
 
-    <div id="perimeter4SidedContainer" class="perimeter-container">
-        <h1>Magnet</h1>
-        <p id="result4Sided"><b>4 Sided:</b> <span id="perimeter4Sided" style="color: green;">0</span></p>
-        <h2>Heat Wire</h2>
-        <p id="heatWireResult4Sided">
-            <b>4 Sided:</b> <span id="heatWirePerimeter4Sided" style="color: green;">0</span>
-        </p>
+    <!-- Results -->
+    <div class="results-grid" id="resultsContainer">
+        <!-- 3 Sided Results -->
+        <div class="section-divider" id="divider3">3 Sided</div>
+        <div class="result-card magnet" id="magnet3Card">
+            <div class="label">🧲 Magnet</div>
+            <div class="value" id="perimeter3Sided">0"</div>
+            <div class="sub">Perimeter</div>
+        </div>
+        <div class="result-card heatwire" id="heatwire3Card">
+            <div class="label">🔥 Heat Wire</div>
+            <div class="value" id="heatWirePerimeter3Sided">0"</div>
+            <div class="sub">Length Needed</div>
+        </div>
+
+        <!-- 4 Sided Results -->
+        <div class="section-divider hidden" id="divider4">4 Sided</div>
+        <div class="result-card magnet hidden" id="magnet4Card">
+            <div class="label">🧲 Magnet</div>
+            <div class="value" id="perimeter4Sided">0"</div>
+            <div class="sub">Perimeter</div>
+        </div>
+        <div class="result-card heatwire hidden" id="heatwire4Card">
+            <div class="label">🔥 Heat Wire</div>
+            <div class="value" id="heatWirePerimeter4Sided">0"</div>
+            <div class="sub">Length Needed</div>
+        </div>
     </div>
 
-    <script>
-        // Global variables
-        let currentInputField = null;
+</div>
 
-        // Parse fraction
-        function parseFraction(value) {
-            const parts = value.split(' ');
-            if (parts.length === 2) {
-                const whole = parseFloat(parts[0]) || 0;
-                const fractionParts = parts[1].split('/');
-                if (fractionParts.length === 2) {
-                    const numerator = parseFloat(fractionParts[0]) || 0;
-                    const denominator = parseFloat(fractionParts[1]) || 1;
+<script>
+    // ── Global variables ──
+    let currentInputField = null;
+
+    // ── Parse fraction ──
+    function parseFraction(value) {
+        if (!value || value.trim() === '') return 0;
+        const parts = value.trim().split(' ');
+        if (parts.length === 2) {
+            const whole = parseFloat(parts[0]) || 0;
+            const fractionParts = parts[1].split('/');
+            if (fractionParts.length === 2) {
+                const numerator = parseFloat(fractionParts[0]) || 0;
+                const denominator = parseFloat(fractionParts[1]) || 1;
+                if (denominator !== 0) {
                     return whole + numerator / denominator;
                 }
             }
-            return parseFloat(value) || 0;
-        }
-
-        // Convert decimal feet to feet and inches
-        function convertDecimalFeetToFeetAndInches(decimalFeet) {
-            var feet = Math.floor(decimalFeet);
-            var inches = Math.round((decimalFeet - feet) * 12);
-            return feet + "' " + inches + '"';
-        }
-
-        // Calculate perimeters
-        function calculatePerimeters() {
-            var HeightInput = document.getElementById("HeightInput").value.trim();
-            var widthInput = document.getElementById("widthInput").value.trim();
-            var numberOfSides = parseInt(document.getElementById("numberOfSides").value);
-
-            var Height = parseFraction(HeightInput);
-            var width = parseFraction(widthInput);
-
-            if (numberOfSides === 3) {
-                var perimeter3Sided = (Height + Height + width) / 12;
-                var heatWirePerimeter3Sided = (Height * 4 + width * 2) / 12 + 0.44;
-
-                document.getElementById("perimeter3Sided").innerText = convertDecimalFeetToFeetAndInches(perimeter3Sided.toFixed(2));
-                document.getElementById("heatWirePerimeter3Sided").innerText = convertDecimalFeetToFeetAndInches(heatWirePerimeter3Sided.toFixed(2));
-
-                document.getElementById("perimeter3SidedContainer").style.display = "block";
-                document.getElementById("perimeter4SidedContainer").style.display = "none";
-            } else if (numberOfSides === 4) {
-                var perimeter4Sided = (Height + Height + width + width) / 12;
-                var heatWirePerimeter4Sided = (Height + Height + width + width - 1) / 12;
-
-                document.getElementById("perimeter4Sided").innerText = convertDecimalFeetToFeetAndInches(perimeter4Sided.toFixed(2));
-                document.getElementById("heatWirePerimeter4Sided").innerText = convertDecimalFeetToFeetAndInches(heatWirePerimeter4Sided.toFixed(2));
-
-                document.getElementById("perimeter3SidedContainer").style.display = "none";
-                document.getElementById("perimeter4SidedContainer").style.display = "block";
+        } else if (parts.length === 1 && parts[0].includes('/')) {
+            const fractionParts = parts[0].split('/');
+            if (fractionParts.length === 2) {
+                const numerator = parseFloat(fractionParts[0]) || 0;
+                const denominator = parseFloat(fractionParts[1]) || 1;
+                if (denominator !== 0) {
+                    return numerator / denominator;
+                }
             }
         }
+        return parseFloat(value) || 0;
+    }
 
-        // Add character to input field
-        function addToInput(character, event) {
-            if (currentInputField) {
-                event.stopPropagation(); // Prevents the event from bubbling up and causing unintended side effects
-                currentInputField.value += character;
-                calculatePerimeters();
-            }
+    // ── Convert decimal feet to feet and inches ──
+    function convertDecimalFeetToFeetAndInches(decimalFeet) {
+        if (isNaN(decimalFeet) || !isFinite(decimalFeet) || decimalFeet < 0) return '0"';
+        var feet = Math.floor(decimalFeet);
+        var inches = Math.round((decimalFeet - feet) * 12);
+        if (feet === 0 && inches === 0) return '0"';
+        if (feet === 0) return inches + '"';
+        if (inches === 0) return feet + "'";
+        return feet + "' " + inches + '"';
+    }
+
+    // ── Calculate perimeters ──
+    function calculatePerimeters() {
+        var HeightInput = document.getElementById("HeightInput").value.trim();
+        var widthInput = document.getElementById("widthInput").value.trim();
+        var numberOfSides = parseInt(document.getElementById("numberOfSides").value);
+
+        var Height = parseFraction(HeightInput);
+        var width = parseFraction(widthInput);
+
+        // Get elements
+        var magnet3 = document.getElementById('magnet3Card');
+        var heatwire3 = document.getElementById('heatwire3Card');
+        var magnet4 = document.getElementById('magnet4Card');
+        var heatwire4 = document.getElementById('heatwire4Card');
+        var divider3 = document.getElementById('divider3');
+        var divider4 = document.getElementById('divider4');
+
+        // Show/hide helper
+        function show3Sided(show) {
+            magnet3.style.display = show ? 'block' : 'none';
+            heatwire3.style.display = show ? 'block' : 'none';
+            divider3.style.display = show ? 'block' : 'none';
+        }
+        function show4Sided(show) {
+            magnet4.style.display = show ? 'block' : 'none';
+            heatwire4.style.display = show ? 'block' : 'none';
+            divider4.style.display = show ? 'block' : 'none';
         }
 
+        if (numberOfSides === 3) {
+            var perimeter3Sided = (Height + Height + width) / 12;
+            var heatWirePerimeter3Sided = (Height * 4 + width * 2) / 12 + 0.44;
 
+            document.getElementById("perimeter3Sided").textContent = convertDecimalFeetToFeetAndInches(perimeter3Sided);
+            document.getElementById("heatWirePerimeter3Sided").textContent = convertDecimalFeetToFeetAndInches(heatWirePerimeter3Sided);
 
-        // Delete last character from input field
-        function deleteLast() {
-            if (currentInputField && currentInputField.value.length > 0) {
-                currentInputField.value = currentInputField.value.slice(0, -1);
-                calculatePerimeters();
-            }
+            show3Sided(true);
+            show4Sided(false);
+
+        } else if (numberOfSides === 4) {
+            var perimeter4Sided = (Height + Height + width + width) / 12;
+            var heatWirePerimeter4Sided = (Height + Height + width + width - 1) / 12;
+
+            document.getElementById("perimeter4Sided").textContent = convertDecimalFeetToFeetAndInches(perimeter4Sided);
+            document.getElementById("heatWirePerimeter4Sided").textContent = convertDecimalFeetToFeetAndInches(heatWirePerimeter4Sided);
+
+            show4Sided(true);
+            show3Sided(false);
         }
+    }
 
-        // Event listener for input focus
-        function handleFocus(event) {
-            currentInputField = event.target;
-            document.getElementById("customKeyboard").style.display = "grid";
-            // Clear the input field on focus
+    // ── Add character to input field ──
+    function addToInput(character, event) {
+        if (currentInputField) {
+            if (event) event.stopPropagation();
+            currentInputField.value += character;
+            calculatePerimeters();
+        }
+    }
+
+    // ── Delete last character ──
+    function deleteLast() {
+        if (currentInputField && currentInputField.value.length > 0) {
+            currentInputField.value = currentInputField.value.slice(0, -1);
+            calculatePerimeters();
+        }
+    }
+
+    // ── Focus handling ──
+    function handleFocus(event) {
+        currentInputField = event.target;
+        document.getElementById("customKeyboard").style.display = "grid";
+        if (currentInputField && currentInputField.dataset.wasFocused) {
             currentInputField.value = '';
+            delete currentInputField.dataset.wasFocused;
         }
+    }
 
-        // Event listener for input blur
-        function handleBlur(event) {
-            // Optional: Add any blur-specific logic here
+    function handleBlur(event) {
+        if (currentInputField) {
+            currentInputField.dataset.wasFocused = true;
         }
+    }
 
-        // Attach event listeners for focus and blur to input fields
-        document.getElementById("HeightInput").addEventListener("focus", handleFocus);
-        document.getElementById("widthInput").addEventListener("focus", handleFocus);
+    // ── Attach event listeners ──
+    document.getElementById("HeightInput").addEventListener("focus", handleFocus);
+    document.getElementById("HeightInput").addEventListener("blur", handleBlur);
+    document.getElementById("widthInput").addEventListener("focus", handleFocus);
+    document.getElementById("widthInput").addEventListener("blur", handleBlur);
 
-        // Hide keyboard when clicking outside
-        document.addEventListener("click", function(event) {
-            if (!event.target.closest('.key') && !event.target.closest('input')) {
-                document.getElementById("customKeyboard").style.display = "none";
-            }
-        });
+    // ── Hide keyboard when clicking outside ──
+    document.addEventListener("click", function(event) {
+        if (!event.target.closest('.key') && !event.target.closest('input')) {
+            document.getElementById("customKeyboard").style.display = "none";
+        }
+    });
 
-        // Attach event listeners to input fields and dropdown
-        document.getElementById("HeightInput").addEventListener("input", calculatePerimeters);
-        document.getElementById("widthInput").addEventListener("input", calculatePerimeters);
-        document.getElementById("numberOfSides").addEventListener("change", calculatePerimeters);
+    // ── Input events ──
+    document.getElementById("HeightInput").addEventListener("input", calculatePerimeters);
+    document.getElementById("widthInput").addEventListener("input", calculatePerimeters);
+    document.getElementById("numberOfSides").addEventListener("change", calculatePerimeters);
 
-        // Initial calculation
-        calculatePerimeters();
-    </script>
+    // ── Initial calculation ──
+    calculatePerimeters();
 
-
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById("customKeyboard").style.display = "none";
+        }
+    });
+</script>
 
 </body>
 </html>

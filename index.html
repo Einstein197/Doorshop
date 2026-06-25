@@ -183,30 +183,113 @@
             justify-content:center;
         }
 
-        /* ── Section Header ── */
-        .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-        .section-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-3); }
+        /* ── Password Modal ── */
+        .password-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .password-overlay.active {
+            display: flex;
+        }
+        .password-box {
+            background: var(--glass);
+            backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .password-box h2 {
+            color: var(--text);
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        .password-box p {
+            color: var(--text-2);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            background: rgba(0,0,0,0.3);
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+        .password-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.2);
+        }
+        .password-box input::placeholder {
+            color: var(--text-3);
+            letter-spacing: 0;
+        }
+        .password-box .error-msg {
+            color: var(--red);
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        .password-box .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+        .password-box .btn-row .btn {
+            padding: 10px 30px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .password-box .btn-row .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .password-box .btn-row .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(79,110,247,0.4);
+        }
+        .password-box .btn-row .btn-ghost {
+            background: var(--glass);
+            color: var(--text-2);
+            border: 1px solid var(--glass-border);
+        }
+        .password-box .btn-row .btn-ghost:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+        }
 
-        /* ── Buttons ── */
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 16px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; transition:all 0.2s; cursor:pointer; }
-        .btn-primary { background:var(--primary); color:white; border:none; }
-        .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,110,247,0.4); }
-        .btn-ghost { background:var(--glass); color:var(--text-2); border:1px solid var(--glass-border); }
-        .btn-ghost:hover { background:rgba(255,255,255,0.08); color:var(--text); }
-
-        /* ── Setting Rows ── */
-        .setting-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--glass-border); }
-        .setting-row:last-child { border-bottom:none; padding-bottom:0; }
-        .setting-name { font-size:13px; font-weight:600; color:var(--text); }
-        .setting-desc { font-size:11px; color:var(--text-3); margin-top:2px; }
-
-        /* ── Toggle Switch ── */
-        .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
-        .toggle input { opacity:0; width:0; height:0; }
-        .toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.1); border-radius:12px; transition:0.2s; cursor:pointer; }
-        .toggle-slider:before { content:""; position:absolute; width:16px; height:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.2s; }
-        input:checked + .toggle-slider { background:var(--primary); }
-        input:checked + .toggle-slider:before { transform:translateX(18px); }
+        /* ── IFrame - AUTO FITS PAGE ── */
+        .page-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: rgba(0,0,0,0.2);
+            display:block;
+        }
 
         /* ── Toast ── */
         #toast {
@@ -262,20 +345,9 @@
         .bnav-item svg { width:20px; height:20px; fill:currentColor; }
         .bnav-item.active { color:var(--primary); }
 
-        /* ── IFrame - AUTO FITS PAGE ── */
-        .page-iframe {
-            width: 100%;
-            height: 100%;
-            min-height: 100%;
-            border: none;
-            border-radius: var(--radius-sm);
-            background: rgba(0,0,0,0.2);
-            display:block;
-        }
-
         /* ── Responsive ── */
         @media (max-width:767px) {
-            .sidebar { display:none; }  /* Sidebar hidden on mobile */
+            .sidebar { display:none; }
             .main-area { margin-left:0; }
             .bottom-nav { display:block; }
             .topbar { padding:0 14px; height:54px; }
@@ -284,9 +356,9 @@
             .pages-inner { max-width:100%; }
             .card { padding:14px; }
             .card-blank { padding:30px 16px; }
-            .btn { padding:6px 12px; font-size:12px; }
             .theme-toggle span { display:none; }
             .theme-toggle { padding:4px 10px; }
+            .password-box { padding:30px 20px; }
         }
         @media (max-width:480px) {
             .pages-wrap { padding:8px 8px 0; }
@@ -312,6 +384,20 @@
 
     <!-- Toast -->
     <div id="toast"></div>
+
+    <!-- Password Overlay -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-box">
+            <h2>🔒 Protected Page</h2>
+            <p>Enter the password to access <strong>Foam Truput</strong></p>
+            <input type="password" id="passwordInput" placeholder="Enter password..." autofocus>
+            <div class="error-msg" id="passwordError"></div>
+            <div class="btn-row">
+                <button class="btn btn-ghost" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="checkPassword()">Unlock</button>
+            </div>
+        </div>
+    </div>
 
     <!-- App Shell -->
     <div class="app-shell">
@@ -339,17 +425,17 @@
                     Gasket
                 </div>
                 <div class="nav-item" id="snav-calculator" onclick="navigate('calculator')">
-                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/><rect x="7" y="7" width="2" height="2" rx="0.5"/><rect x="11" y="7" width="2" height="2" rx="0.5"/><rect x="15" y="7" width="2" height="2" rx="0.5"/></svg>
                     Calculator
+                </div>
+                <div class="nav-item" id="snav-truput" onclick="openPasswordModal()">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>
+                    Truput
                 </div>
                 <a href="https://172.16.20.123:5000" class="nav-item" id="snav-upload">
                     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                     Door Upload
                 </a>
-                <div class="nav-item" id="snav-settings" onclick="navigate('settings')">
-                    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-                    Settings
-                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -404,85 +490,31 @@
 
                     <!-- GASKET PAGE -->
                     <div class="page" id="page-gasket">
-                        <div class="card">
-                            <div class="section-header">
-                                <span class="section-title">Gasket Materials</span>
-                            </div>
-                            <div style="color:var(--text-2); padding:20px 0; text-align:center; font-size:15px;">
-                                Gasket materials and sizes.
-                            </div>
-                            <div style="text-align:center; padding:10px; background:var(--glass); border-radius:8px; color:var(--text-3); font-size:13px;">
-                                ⚡ Gasket catalog coming soon.
-                            </div>
+                        <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
+                            <iframe src="gasket.html" class="page-iframe" id="gasketIframe" title="Gasket Page"></iframe>
                         </div>
                     </div>
 
                     <!-- CALCULATOR PAGE -->
                     <div class="page" id="page-calculator">
-                        <div class="card">
-                            <div class="section-header">
-                                <span class="section-title">Calculator</span>
-                            </div>
-                            <div style="color:var(--text-2); padding:20px 0; text-align:center; font-size:15px;">
-                                Door measurement calculator.
-                            </div>
-                            <div style="text-align:center; padding:10px; background:var(--glass); border-radius:8px; color:var(--text-3); font-size:13px;">
-                                ⚡ Calculator tool coming soon.
-                            </div>
+                        <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
+                            <iframe src="calculator.html" class="page-iframe" id="calculatorIframe" title="Calculator Page"></iframe>
                         </div>
                     </div>
 
-                    <!-- UPLOAD PAGE -->
+                    <!-- TRUPUT PAGE (Password Protected) -->
+                    <div class="page" id="page-truput">
+                        <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
+                            <iframe src="foamtruput.html" class="page-iframe" id="truputIframe" title="Truput Page"></iframe>
+                        </div>
+                    </div>
+
+                    <!-- UPLOAD PAGE (external) -->
                     <div class="page" id="page-upload">
-                        <div class="card">
-                            <div class="section-header">
-                                <span class="section-title">Door Upload</span>
-                            </div>
-                            <div style="color:var(--text-2); padding:20px 0; text-align:center; font-size:15px;">
-                                Upload door designs and specs.
-                            </div>
-                            <div style="text-align:center; padding:10px; background:var(--glass); border-radius:8px; color:var(--text-3); font-size:13px;">
-                                ⚡ This feature is available at the external Door Upload page.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SETTINGS PAGE -->
-                    <div class="page" id="page-settings">
-                        <div class="card">
-                            <div class="section-header">
-                                <span class="section-title">Settings</span>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="setting-name">Current Theme</div>
-                                    <div class="setting-desc">Click the palette button in the topbar</div>
-                                </div>
-                                <span style="color:var(--text-2); font-size:13px;" id="currentThemeDisplay">navy</span>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="setting-name">Dark Glassmorphism</div>
-                                    <div class="setting-desc">Frosted glass effect with blur</div>
-                                </div>
-                                <label class="toggle">
-                                    <input type="checkbox" checked disabled>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="setting-name">Animated Orbs</div>
-                                    <div class="setting-desc">Floating background particles</div>
-                                </div>
-                                <label class="toggle">
-                                    <input type="checkbox" checked id="orbToggle" onchange="toggleOrbs(this.checked)">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div style="margin-top:20px;">
-                                <button class="btn btn-primary" onclick="toast('✅ Settings saved!','success')">Save Preferences</button>
-                            </div>
+                        <div class="card-blank">
+                            <div style="font-size:48px; margin-bottom:16px;">📤</div>
+                            <div style="font-size:18px; font-weight:600; color:var(--text-2);">Door Upload</div>
+                            <div style="margin-top:8px; color:var(--text-3);">Opening external page...</div>
                         </div>
                     </div>
 
@@ -511,18 +543,105 @@
                 <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
                 <span>Calc</span>
             </div>
-            <a href="https://172.16.20.123:5000" class="bnav-item" id="bnav-upload">
+            <div class="bnav-item" id="bnav-truput" onclick="openPasswordModal()">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>
+                <span>Truput</span>
+            </div>
+            <div class="bnav-item" id="bnav-upload" onclick="navigate('upload')">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                 <span>Upload</span>
-            </a>
-            <div class="bnav-item" id="bnav-settings" onclick="navigate('settings')">
-                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-                <span>Settings</span>
             </div>
         </div>
     </nav>
 
     <script>
+        // ── Password Configuration ──
+        const TRUPUT_PASSWORD = 'doorshop2024'; // ← CHANGE THIS PASSWORD!
+
+        var passwordAttempts = 0;
+        var maxAttempts = 3;
+
+        // ── Open Password Modal ──
+        function openPasswordModal() {
+            document.getElementById('passwordOverlay').classList.add('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').textContent = '';
+            setTimeout(function() {
+                document.getElementById('passwordInput').focus();
+            }, 100);
+        }
+
+        // ── Close Password Modal ──
+        function closePasswordModal() {
+            document.getElementById('passwordOverlay').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').textContent = '';
+        }
+
+        // ── Check Password ──
+        function checkPassword() {
+            var input = document.getElementById('passwordInput').value;
+            var errorEl = document.getElementById('passwordError');
+
+            if (input === TRUPUT_PASSWORD) {
+                // Password correct - close modal and navigate to truput
+                closePasswordModal();
+                // Set session so they don't need to re-enter
+                sessionStorage.setItem('truputUnlocked', 'true');
+                // Navigate to truput page
+                navigateToTruput();
+                toast('🔓 Access granted!', 'success');
+                passwordAttempts = 0;
+            } else {
+                passwordAttempts++;
+                var remaining = maxAttempts - passwordAttempts;
+                if (remaining <= 0) {
+                    errorEl.textContent = '❌ Too many attempts! Reload the page to try again.';
+                    document.getElementById('passwordInput').disabled = true;
+                    setTimeout(function() {
+                        document.getElementById('passwordInput').disabled = false;
+                        passwordAttempts = 0;
+                        errorEl.textContent = '';
+                        document.getElementById('passwordInput').value = '';
+                    }, 30000);
+                } else {
+                    errorEl.textContent = '❌ Wrong password. ' + remaining + ' attempt(s) remaining.';
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('passwordInput').focus();
+                }
+            }
+        }
+
+        // ── Navigate to Truput ──
+        function navigateToTruput() {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            // Show truput page
+            var pg = document.getElementById('page-truput');
+            if (pg) pg.classList.add('active');
+            currentPage = 'truput';
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+            var ni = document.getElementById('snav-truput');
+            if (ni) ni.classList.add('active');
+            
+            document.querySelectorAll('.bnav-item').forEach(function(n) { n.classList.remove('active'); });
+            var bi = document.getElementById('bnav-truput');
+            if (bi) bi.classList.add('active');
+            
+            // Update page title
+            var tt = document.getElementById('page-title');
+            if (tt) tt.textContent = 'Truput';
+            
+            // Reload iframe
+            var iframe = document.getElementById('truputIframe');
+            if (iframe) iframe.src = iframe.src;
+            
+            setProgress(100);
+            setTimeout(function(){ setProgress(0); }, 300);
+        }
+
         // ── Toast notification ──
         var toastTimer = null;
         function toast(msg, type) {
@@ -550,6 +669,15 @@
                 window.location.href = 'https://172.16.20.123:5000';
                 return;
             }
+            if (name === 'truput') {
+                // Check if already unlocked in this session
+                if (sessionStorage.getItem('truputUnlocked') === 'true') {
+                    navigateToTruput();
+                    return;
+                }
+                openPasswordModal();
+                return;
+            }
             
             document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
             var pg = document.getElementById('page-' + name);
@@ -569,16 +697,24 @@
                 foam: 'Foam',
                 gasket: 'Gasket',
                 calculator: 'Calculator',
+                truput: 'Truput',
                 settings: 'Settings'
             };
             var tt = document.getElementById('page-title');
             if (tt) tt.textContent = titles[name] || name;
             
+            // Reload iframes when navigating to them
             if (name === 'foam') {
                 var iframe = document.getElementById('foamIframe');
-                if (iframe) {
-                    iframe.src = iframe.src;
-                }
+                if (iframe) iframe.src = iframe.src;
+            }
+            if (name === 'gasket') {
+                var iframe = document.getElementById('gasketIframe');
+                if (iframe) iframe.src = iframe.src;
+            }
+            if (name === 'calculator') {
+                var iframe = document.getElementById('calculatorIframe');
+                if (iframe) iframe.src = iframe.src;
             }
             
             setProgress(100);
@@ -613,8 +749,6 @@
             Object.keys(t).forEach(function(k) { root.style.setProperty(k, t[k]); });
             var label = document.getElementById('themeLabel');
             if (label) label.textContent = name;
-            var display = document.getElementById('currentThemeDisplay');
-            if (display) display.textContent = name;
             localStorage.setItem('theme', name);
             toast('🎨 Theme: ' + name, 'info');
         }
@@ -643,14 +777,32 @@
             else applyTheme('navy');
             
             var hash = window.location.hash.replace('#', '');
-            if (hash && ['home','foam','gasket','calculator','settings'].includes(hash)) {
-                navigate(hash);
+            if (hash && ['home','foam','gasket','calculator','truput'].includes(hash)) {
+                if (hash === 'truput' && sessionStorage.getItem('truputUnlocked') !== 'true') {
+                    openPasswordModal();
+                } else {
+                    navigate(hash);
+                }
             } else {
                 navigate('home');
             }
             
             setProgress(100);
             setTimeout(function(){ setProgress(0); }, 400);
+        });
+
+        // ── Enter key on password input ──
+        document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // ── Close modal when clicking outside ──
+        document.getElementById('passwordOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePasswordModal();
+            }
         });
     </script>
 

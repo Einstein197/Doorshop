@@ -432,10 +432,10 @@
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>
                     Truput
                 </div>
-                <a href="https://172.16.20.123:5000" class="nav-item" id="snav-upload">
+                <div class="nav-item" id="snav-upload" onclick="navigate('upload')">
                     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                     Door Upload
-                </a>
+                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -509,12 +509,10 @@
                         </div>
                     </div>
 
-                    <!-- UPLOAD PAGE (external) -->
+                    <!-- UPLOAD PAGE (Now in iframe like others) -->
                     <div class="page" id="page-upload">
-                        <div class="card-blank">
-                            <div style="font-size:48px; margin-bottom:16px;">📤</div>
-                            <div style="font-size:18px; font-weight:600; color:var(--text-2);">Door Upload</div>
-                            <div style="margin-top:8px; color:var(--text-3);">Opening external page...</div>
+                        <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
+                            <iframe src="http://172.20.10.4:5000" class="page-iframe" id="uploadIframe" title="Door Upload"></iframe>
                         </div>
                     </div>
 
@@ -584,11 +582,8 @@
             var errorEl = document.getElementById('passwordError');
 
             if (input === TRUPUT_PASSWORD) {
-                // Password correct - close modal and navigate to truput
                 closePasswordModal();
-                // Set session so they don't need to re-enter
                 sessionStorage.setItem('truputUnlocked', 'true');
-                // Navigate to truput page
                 navigateToTruput();
                 toast('🔓 Access granted!', 'success');
                 passwordAttempts = 0;
@@ -614,14 +609,11 @@
 
         // ── Navigate to Truput ──
         function navigateToTruput() {
-            // Hide all pages
             document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-            // Show truput page
             var pg = document.getElementById('page-truput');
             if (pg) pg.classList.add('active');
             currentPage = 'truput';
             
-            // Update nav items
             document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
             var ni = document.getElementById('snav-truput');
             if (ni) ni.classList.add('active');
@@ -630,11 +622,9 @@
             var bi = document.getElementById('bnav-truput');
             if (bi) bi.classList.add('active');
             
-            // Update page title
             var tt = document.getElementById('page-title');
             if (tt) tt.textContent = 'Truput';
             
-            // Reload iframe
             var iframe = document.getElementById('truputIframe');
             if (iframe) iframe.src = iframe.src;
             
@@ -665,12 +655,7 @@
         // ── Page navigation ──
         var currentPage = 'home';
         function navigate(name) {
-            if (name === 'upload') {
-                window.location.href = 'https://172.16.20.123:5000';
-                return;
-            }
             if (name === 'truput') {
-                // Check if already unlocked in this session
                 if (sessionStorage.getItem('truputUnlocked') === 'true') {
                     navigateToTruput();
                     return;
@@ -698,7 +683,7 @@
                 gasket: 'Gasket',
                 calculator: 'Calculator',
                 truput: 'Truput',
-                settings: 'Settings'
+                upload: 'Door Upload'
             };
             var tt = document.getElementById('page-title');
             if (tt) tt.textContent = titles[name] || name;
@@ -716,6 +701,10 @@
                 var iframe = document.getElementById('calculatorIframe');
                 if (iframe) iframe.src = iframe.src;
             }
+            if (name === 'upload') {
+                var iframe = document.getElementById('uploadIframe');
+                if (iframe) iframe.src = iframe.src;
+            }
             
             setProgress(100);
             setTimeout(function(){ setProgress(0); }, 300);
@@ -726,6 +715,11 @@
             setProgress(30);
             setTimeout(function() { setProgress(70); }, 200);
             setTimeout(function() {
+                // Reload current iframe
+                var currentIframe = document.querySelector('.page.active .page-iframe');
+                if (currentIframe) {
+                    currentIframe.src = currentIframe.src;
+                }
                 setProgress(100);
                 toast('🔄 Refreshed', 'success');
             }, 500);
@@ -761,15 +755,6 @@
             });
         }
 
-        // ── Toggle Orbs ──
-        function toggleOrbs(checked) {
-            var orbs = document.querySelectorAll('.bg-orb');
-            orbs.forEach(function(orb) {
-                orb.style.opacity = checked ? '' : '0';
-            });
-            toast(checked ? '✨ Orbs visible' : '🌙 Orbs hidden', 'info');
-        }
-
         // ── On load ──
         window.addEventListener('DOMContentLoaded', function() {
             var savedTheme = localStorage.getItem('theme');
@@ -777,7 +762,7 @@
             else applyTheme('navy');
             
             var hash = window.location.hash.replace('#', '');
-            if (hash && ['home','foam','gasket','calculator','truput'].includes(hash)) {
+            if (hash && ['home','foam','gasket','calculator','truput','upload'].includes(hash)) {
                 if (hash === 'truput' && sessionStorage.getItem('truputUnlocked') !== 'true') {
                     openPasswordModal();
                 } else {

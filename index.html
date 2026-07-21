@@ -432,10 +432,10 @@
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>
                     Truput
                 </div>
-                <a href="https://mushroom-levitate-sandbag.ngrok-free.dev" target="_blank" class="nav-item" id="snav-upload">
+                <div class="nav-item" id="snav-upload" onclick="navigate('upload')">
                     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                     Door Upload
-                </a>
+                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -509,16 +509,10 @@
                         </div>
                     </div>
 
-                    <!-- UPLOAD PAGE (Opens in new tab) -->
+                    <!-- UPLOAD PAGE (In Iframe) -->
                     <div class="page" id="page-upload">
-                        <div class="card-blank">
-                            <div style="font-size:48px; margin-bottom:16px;">📤</div>
-                            <div style="font-size:18px; font-weight:600; color:var(--text-2);">Door Upload</div>
-                            <div style="margin-top:8px; color:var(--text-3);">Opening in new tab...</div>
-                            <br>
-                            <a href="https://mushroom-levitate-sandbag.ngrok-free.dev" target="_blank" style="display:inline-block; padding:12px 24px; background:var(--primary); color:white; border-radius:8px; text-decoration:none;">
-                                📤 Open Door Upload
-                            </a>
+                        <div class="card" style="padding: 0; overflow: hidden; background: transparent; backdrop-filter: none; border: none; height:100%;">
+                            <iframe src="https://mushroom-levitate-sandbag.ngrok-free.dev" class="page-iframe" id="uploadIframe" title="Door Upload"></iframe>
                         </div>
                     </div>
 
@@ -551,10 +545,10 @@
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>
                 <span>Truput</span>
             </div>
-            <a href="https://mushroom-levitate-sandbag.ngrok-free.dev" target="_blank" class="bnav-item" id="bnav-upload">
+            <div class="bnav-item" id="bnav-upload" onclick="navigate('upload')">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                 <span>Upload</span>
-            </a>
+            </div>
         </div>
     </nav>
 
@@ -661,6 +655,14 @@
         // ── Page navigation ──
         var currentPage = 'home';
         function navigate(name) {
+            if (name === 'upload') {
+                // Load upload in iframe
+                var iframe = document.getElementById('uploadIframe');
+                if (iframe) {
+                    iframe.src = 'https://mushroom-levitate-sandbag.ngrok-free.dev';
+                }
+            }
+            
             if (name === 'truput') {
                 if (sessionStorage.getItem('truputUnlocked') === 'true') {
                     navigateToTruput();
